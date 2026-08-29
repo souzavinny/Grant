@@ -34,10 +34,18 @@ npm run devnet:up
 #    then in its settings pick network "Undeployed" and proof server
 #    http://localhost:6300
 
-# 3. Fund your wallet from the devnet genesis supply (fees are paid in your wallet)
-npm run faucet -- <your mn_addr_undeployed1... address>
+# 3. Fund your wallet with NIGHT from the devnet genesis supply. Copy the
+#    address starting mn_addr_undeployed1… from your wallet (NOT the mn_dust_…
+#    one — that's the dust key, which can't receive transfers).
+npm run faucet -- <mn_addr_undeployed1...>
 
-# 4. Build and serve the dApp, then open it and press "Connect wallet"
+# 4. Generate DUST (the fee resource). Once the NIGHT arrives, use your
+#    wallet's dust/fee generation action; dust accrues from your NIGHT within
+#    a minute or two. (Registration must be signed by your wallet — the
+#    faucet can't do it for you; `npm run faucet -- --self-test` proves this
+#    exact NIGHT → register → dust path works end-to-end.)
+
+# 5. Build and serve the dApp, then open it and press "Connect wallet"
 cd ../agentpass-ui
 npm run build && npm run start     # or `npm run dev` while developing
 ```

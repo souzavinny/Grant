@@ -1,17 +1,29 @@
-// Grant faucet: funds any wallet address on the local fixed-port devnet from
-// the genesis wallet, so external users (Lace / Gero / 1AM) can pay fees.
+// Grant faucet: funds wallets on the local fixed-port devnet from the genesis
+// wallet so external users (Lace / Gero / 1AM) can transact.
 //
-//   npm run faucet -- <mn_addr_undeployed1...>   # fund an address
-//   npm run faucet -- --self-test                # fund a fresh random wallet and assert arrival
+// Wallets need two things before they can pay fees:
+//   1. NIGHT — sent by this faucet to the wallet's unshielded address
+//      (mn_addr_undeployed1…)
+//   2. DUST — the fee resource. It is generated FROM your NIGHT after your
+//      wallet registers it (dust registration must be signed by the NIGHT
+//      owner, so only your wallet can do it — look for a dust/fee generation
+//      action in the wallet UI after the NIGHT arrives).
+//
+//   npm run faucet -- <mn_addr_undeployed1...> [amount]
+//   npm run faucet -- --self-test    # funds a fresh wallet AND walks the full
+//                                    # owner-side dust registration, asserting
+//                                    # dust actually accrues
 //
 // Requires the fixed-port devnet: docker compose -f ../devnet/devnet.yml up -d
 //
 // SPDX-License-Identifier: Apache-2.0
 
 import { WebSocket } from 'ws';
+import * as Rx from 'rxjs';
 import { createLogger } from '../logger-utils.js';
 import { MidnightWalletProvider } from '../midnight-wallet-provider.js';
 import { waitForUnshieldedFunds } from '../wallet-utils.js';
+import { generateDust } from '../generate-dust.js';
 import { unshieldedToken } from '@midnight-ntwrk/midnight-js-protocol/ledger';
 import { ttlOneHour } from '@midnight-ntwrk/midnight-js-utils';
 import { setNetworkId, getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
@@ -40,12 +52,28 @@ const env: EnvironmentConfiguration = {
 
 const args = process.argv.slice(2).filter((a) => a !== '--');
 const selfTest = args.includes('--self-test');
-const addressArg = args.find((a) => a.startsWith('mn_addr'));
+const nightAddressArg = args.find((a) => a.startsWith('mn_addr'));
+const dustAddressArg = args.find((a) => a.startsWith('mn_dust'));
+const shieldedArg = args.find((a) => a.startsWith('mn_shield'));
 const amountArg = args.find((a) => /^\d+$/.test(a));
 const amount = amountArg ? BigInt(amountArg) : DEFAULT_AMOUNT;
 
-if (!selfTest && !addressArg) {
-  console.error('Usage: npm run faucet -- <mn_addr_undeployed1...> [amount]   |   npm run faucet -- --self-test');
+if (shieldedArg) {
+  console.error(`That looks like a SHIELDED address (${shieldedArg.slice(0, 24)}…).`);
+  console.error('The faucet funds the unshielded side: copy the address starting mn_addr_undeployed1…');
+  console.error('and, for fees, the dust address starting mn_dust_undeployed1… from your wallet.');
+  process.exit(2);
+}
+if (dustAddressArg && !nightAddressArg && !selfTest) {
+  console.error(`That is your DUST address (${dustAddressArg.slice(0, 24)}…) — dust cannot be sent, only generated.`);
+  console.error('1. Give the faucet your NIGHT address instead:  npm run faucet -- <mn_addr_undeployed1…>');
+  console.error("2. After the NIGHT arrives, use your wallet's dust/fee generation action — dust accrues from your");
+  console.error('   NIGHT within a minute or two, then transactions work.');
+  process.exit(2);
+}
+if (!selfTest && !nightAddressArg) {
+  console.error('Usage: npm run faucet -- <mn_addr_undeployed1…> [amount]   |   npm run faucet -- --self-test');
+  console.error('Copy the address starting mn_addr_undeployed1… from your wallet (its NIGHT / unshielded address).');
   process.exit(2);
 }
 
@@ -54,14 +82,9 @@ const logger = await createLogger(
   path.resolve(currentDir, '..', '..', 'logs', 'faucet', `${new Date().toISOString()}.log`),
 );
 
-const sendTo = async (genesis: MidnightWalletProvider, receiverAddress: UnshieldedAddress): Promise<string> => {
+const sendNight = async (genesis: MidnightWalletProvider, receiverAddress: UnshieldedAddress): Promise<string> => {
   const recipe = await genesis.wallet.transferTransaction(
-    [
-      {
-        type: 'unshielded',
-        outputs: [{ type: unshieldedToken().raw, receiverAddress, amount }],
-      },
-    ],
+    [{ type: 'unshielded', outputs: [{ type: unshieldedToken().raw, receiverAddress, amount }] }],
     { shieldedSecretKeys: genesis.zswapSecretKeys, dustSecretKey: genesis.dustSecretKey },
     { ttl: ttlOneHour() },
   );
@@ -78,25 +101,40 @@ try {
 
   if (selfTest) {
     console.log('Self-test: creating a fresh random wallet…');
-    const fresh = await MidnightWalletProvider.build(logger, env);
+    const freshSeed = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('hex');
+    const fresh = await MidnightWalletProvider.build(logger, env, freshSeed);
     await fresh.start();
-    const freshState = await import('rxjs').then((Rx) => Rx.firstValueFrom(fresh.wallet.unshielded.state));
-    const freshAddress = freshState.address;
-    const encoded = UnshieldedAddress.codec.encode(getNetworkId(), freshAddress).asString();
-    console.log(`Fresh wallet address: ${encoded}`);
-    const txId = await sendTo(genesis, freshAddress);
-    console.log(`Sent ${amount} NIGHT (tx ${txId}); waiting for it to arrive…`);
+    const freshUnshielded = await Rx.firstValueFrom(fresh.wallet.unshielded.state);
+    const encoded = UnshieldedAddress.codec.encode(getNetworkId(), freshUnshielded.address).asString();
+    console.log(`Fresh wallet NIGHT address: ${encoded}`);
+
+    const nightTx = await sendNight(genesis, freshUnshielded.address);
+    console.log(`Sent ${amount} NIGHT (tx ${nightTx}); waiting for it to arrive…`);
     const funded = await waitForUnshieldedFunds(logger, fresh.wallet, env, unshieldedToken());
     const balance = funded.balances[unshieldedToken().raw] ?? 0n;
-    if (balance <= 0n) throw new Error('self-test failed: balance did not arrive');
-    console.log(`FAUCET SELF-TEST PASSED — fresh wallet balance: ${balance}`);
+    if (balance <= 0n) throw new Error('self-test failed: NIGHT balance did not arrive');
+    console.log(`NIGHT arrived — balance ${balance}.`);
+
+    console.log('Registering the fresh NIGHT for dust generation (what your wallet does when you generate dust)…');
+    const dustTx = await generateDust(logger, freshSeed, funded, fresh.wallet);
+    if (!dustTx) throw new Error('self-test failed: no unregistered UTXO found to register');
+    const dustBalance = await Rx.firstValueFrom(
+      fresh.wallet.state().pipe(
+        Rx.map((state) => state.dust.balance(new Date())),
+        Rx.filter((b) => b > 0n),
+        Rx.timeout({ first: 240_000 }),
+      ),
+    );
+    console.log(`FAUCET SELF-TEST PASSED — fresh wallet NIGHT: ${balance}, DUST: ${dustBalance}`);
     await fresh.stop();
   } else {
-    const parsed = MidnightBech32m.parse(addressArg!);
-    const receiver = UnshieldedAddress.codec.decode(getNetworkId(), parsed);
-    const txId = await sendTo(genesis, receiver);
-    console.log(`Sent ${amount} NIGHT to ${addressArg} (tx ${txId}).`);
-    console.log('Open your wallet — the balance appears after its next sync.');
+    const receiver = UnshieldedAddress.codec.decode(getNetworkId(), MidnightBech32m.parse(nightAddressArg!));
+    const txId = await sendNight(genesis, receiver);
+    console.log(`Sent ${amount} NIGHT to ${nightAddressArg!.slice(0, 32)}… (tx ${txId}).`);
+    console.log('');
+    console.log('NEXT STEP — fees are paid in DUST, which your wallet generates from this NIGHT:');
+    console.log("  once the NIGHT shows up (next wallet sync), use your wallet's dust/fee generation");
+    console.log('  action, wait a minute or two for dust to accrue, then retry your transaction.');
   }
 
   await genesis.stop();
