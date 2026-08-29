@@ -1,7 +1,7 @@
-// Grant — hire AI agents with permissions, not passwords.
-// Wallet-connected dApp: the user's own Midnight wallet (Lace / Gero / 1AM)
-// balances, signs, and submits every transaction; credentials and receipts
-// live on-chain; all secrets stay in this browser.
+// Grant — the wallet-connected dApp, wearing the product design.
+// Views live in views.tsx; this file owns state and the real credential
+// logic: any Midnight wallet (Lace / Gero / 1AM) balances, signs, and
+// submits every transaction; secrets stay in this browser.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -10,13 +10,12 @@ import { type Logger } from 'pino';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 import {
   AgentPassAPI,
-  type AgentPassProviders,
   agentPrivateStateKey,
   makeTerms,
   derivePublicKey,
+  type AgentPassProviders,
 } from '../../api/src/index';
-import { AgentPass } from 'agentpass-contract';
-import { ACTION_LABELS, AGENTS, agentById, type DirectoryAgent } from './grant/agents';
+import { ACTION_LABELS, agentById } from './grant/agents';
 import {
   loadSession,
   saveSession,
@@ -27,160 +26,157 @@ import {
   type StoredSession,
 } from './grant/session';
 import { connectToWallet, buildProviders } from './grant/wallet';
+import {
+  Nav,
+  Toast,
+  Landing,
+  Directory,
+  AgentDetail,
+  Dashboard,
+  ReceiptDetail,
+  Onboarding,
+  PermissionSheet,
+  FireModal,
+  type View,
+  type BlockedInfo,
+} from './views';
 
 const HOUR = 3_600_000;
-
-type Phase = 'connect' | 'connecting' | 'setup' | 'ready';
-
-type LedgerView = {
-  mandates: Array<{ id: string; spent: string; revoked: boolean }>;
-  authorizations: string;
-  receiptCount: number;
-};
-
-type SheetState = { agent: DirectoryAgent; cap: string } | null;
-
-const employmentTerms = (e: StoredEmployment): AgentPass.MandateTerms =>
-  makeTerms(BigInt(e.cap), BigInt(e.expiry), derivePublicKey(fromHexStr(e.agentSkHex)), e.scope);
-
 const timeBound = (): bigint => BigInt(Math.ceil((Date.now() + 1) / HOUR) * HOUR);
 
 const App: React.FC<{ logger: Logger }> = ({ logger }) => {
-  const [phase, setPhase] = useState<Phase>('connect');
-  const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [sheet, setSheet] = useState<SheetState>(null);
+  const [view, setView] = useState<View>('landing');
+  const [agentId, setAgentId] = useState<string | null>(null);
+  const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [cat, setCat] = useState('All');
+  const [q, setQ] = useState('');
+
   const [session, setSession] = useState<StoredSession>(() => loadSession());
-  const [ledger, setLedger] = useState<LedgerView | null>(null);
+  const [wallet, setWallet] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [connStatus, setConnStatus] = useState('');
+  const [connError, setConnError] = useState('');
+
+  const [sheetAgent, setSheetAgent] = useState<string | null>(null);
+  const [sheetCap, setSheetCap] = useState<bigint>(0n);
+  const [sheetCount, setSheetCount] = useState(0);
+  const [proving, setProving] = useState(false);
+  const [busyAgent, setBusyAgent] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<Record<string, BlockedInfo | undefined>>({});
+  const [fireId, setFireId] = useState<string | null>(null);
+  const [firing, setFiring] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const pendingHire = useRef<string | null>(null);
 
   const providersRef = useRef<AgentPassProviders | null>(null);
   const principalRef = useRef<AgentPassAPI | null>(null);
   const agentRef = useRef<AgentPassAPI | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const go = useCallback((v: View) => {
+    setView(v);
+    window.scrollTo(0, 0);
+  }, []);
+
+  const showToast = useCallback((text: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(text);
+    toastTimer.current = setTimeout(() => setToast(null), 4200);
+  }, []);
 
   const persist = useCallback((next: StoredSession) => {
     saveSession(next);
     setSession({ ...next, employments: { ...next.employments } });
   }, []);
 
-  // ------------------------------------------------------------------ connect
+  // ---------------------------------------------------------------- connect
   const connect = useCallback(async () => {
-    setPhase('connecting');
-    setError('');
+    if (connecting) return;
+    setConnecting(true);
+    setConnError('');
     try {
-      setStatus('Waiting for your wallet to approve this app…');
+      setConnStatus('Waiting for your wallet to approve this app…');
       const networkId = import.meta.env.VITE_NETWORK_ID as string;
       const connectedAPI = await connectToWallet(logger, networkId);
-      const providers = await buildProviders(logger, connectedAPI);
-      providersRef.current = providers;
+      providersRef.current = await buildProviders(logger, connectedAPI);
 
-      setPhase('setup');
       const current = loadSession();
       const principalState = { principalSecretKey: fromHexStr(current.principalSkHex) };
       if (current.contractAddress) {
-        setStatus('Joining your Grant registry…');
+        setConnStatus('Joining your Grant registry…');
         principalRef.current = await AgentPassAPI.join(
-          providers,
+          providersRef.current,
           current.contractAddress,
           'agentPassPrincipal',
           principalState,
           logger,
         );
       } else {
-        setStatus('First run: publishing your Grant registry (your wallet will ask to approve one transaction)…');
-        principalRef.current = await AgentPassAPI.deploy(providers, principalState, logger);
+        setConnStatus('First run: publishing your registry — your wallet will ask to approve one transaction…');
+        principalRef.current = await AgentPassAPI.deploy(providersRef.current, principalState, logger);
         current.contractAddress = principalRef.current.deployedContractAddress;
       }
       agentRef.current = await AgentPassAPI.join(
-        providers,
+        providersRef.current,
         principalRef.current.deployedContractAddress,
         agentPrivateStateKey,
         {},
         logger,
       );
       persist(current);
-      setPhase('ready');
-      setStatus('');
-    } catch (e) {
-      setPhase('connect');
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, [logger, persist]);
-
-  // ------------------------------------------------------------- ledger poll
-  const refreshLedger = useCallback(async () => {
-    const providers = providersRef.current;
-    const principal = principalRef.current;
-    if (!providers || !principal) return;
-    try {
-      const contractState = await providers.publicDataProvider.queryContractState(principal.deployedContractAddress);
-      if (contractState == null) return;
-      const l = AgentPass.ledger(contractState.data);
-      const mandates: LedgerView['mandates'] = [];
-      for (const [id] of l.mandateCommitments) {
-        mandates.push({
-          id: toHex(id),
-          spent: (l.spentAmounts.member(id) ? l.spentAmounts.lookup(id) : 0n).toString(),
-          revoked: l.revokedMandates.member(id),
-        });
+      setWallet('wallet');
+      showToast('Wallet connected. Your keys stay yours — it only signs permissions.');
+      if (pendingHire.current) {
+        const id = pendingHire.current;
+        pendingHire.current = null;
+        setAgentId(id);
+        go('agent');
+        openSheet(id);
+      } else {
+        go('directory');
       }
-      setLedger({
-        mandates,
-        authorizations: l.authorizations.toString(),
-        receiptCount: [...l.receipts].length,
-      });
     } catch (e) {
-      logger.warn(e, 'ledger refresh failed');
-    }
-  }, [logger]);
-
-  useEffect(() => {
-    if (phase !== 'ready') return;
-    void refreshLedger();
-    const timer = setInterval(() => void refreshLedger(), 6_000);
-    return () => clearInterval(timer);
-  }, [phase, refreshLedger]);
-
-  // ---------------------------------------------------------------- actions
-  const withEmployment = (agentId: string): StoredEmployment => {
-    const employment = session.employments[agentId];
-    if (!employment) throw new Error('not hired');
-    return employment;
-  };
-
-  const setResult = (agentId: string, lastResult: string) => {
-    const current = loadSession();
-    if (current.employments[agentId]) {
-      current.employments[agentId].lastResult = lastResult;
-      persist(current);
-    }
-  };
-
-  const run = async (label: string, fn: () => Promise<void>) => {
-    if (busy) return;
-    setBusy(true);
-    setStatus(label);
-    setError('');
-    try {
-      await fn();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setConnError(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
-      setStatus('');
-      void refreshLedger();
+      setConnecting(false);
+      setConnStatus('');
     }
-  };
+  }, [connecting, logger, persist, showToast, go]);
 
-  const hire = (agent: DirectoryAgent, cap: bigint) =>
-    run(`Issuing ${agent.name}'s credential — approve in your wallet, then the proof is generated…`, async () => {
+  // ------------------------------------------------------------ hire flow
+  const openSheet = useCallback((id: string) => {
+    const a = agentById(id);
+    setSheetAgent(id);
+    setSheetCap(a.wants.cap);
+    setProving(false);
+    setSheetCount((n) => n + 1);
+  }, []);
+
+  const requestHire = useCallback(
+    (id: string) => {
+      if (!wallet) {
+        pendingHire.current = id;
+        go('onboarding');
+        return;
+      }
+      openSheet(id);
+    },
+    [wallet, go, openSheet],
+  );
+
+  const allow = useCallback(async () => {
+    const id = sheetAgent;
+    if (!id || proving) return;
+    const a = agentById(id);
+    setProving(true);
+    try {
       const principal = principalRef.current!;
       const current = loadSession();
       const agentSk = randomBytes(32);
       const nonce = randomBytes(32);
       const salt = randomBytes(32);
-      const expiry = BigInt(Date.now() + agent.wants.days * 86_400_000);
-      const terms = makeTerms(cap, expiry, derivePublicKey(agentSk), agent.wants.actions);
+      const expiry = BigInt(Date.now() + a.wants.days * 86_400_000);
+      const terms = makeTerms(sheetCap, expiry, derivePublicKey(agentSk), a.wants.actions);
       await principal.setPrivateState({
         principalSecretKey: fromHexStr(current.principalSkHex),
         mandateNonce: nonce,
@@ -188,331 +184,224 @@ const App: React.FC<{ logger: Logger }> = ({ logger }) => {
         mandateSalt: salt,
       });
       const { mandateId } = await principal.issueMandate();
-      current.employments[agent.id] = {
-        agentId: agent.id,
+      current.employments[id] = {
+        agentId: id,
         agentSkHex: toHexStr(agentSk),
         nonceHex: toHexStr(nonce),
         saltHex: toHexStr(salt),
         mandateIdHex: toHex(mandateId),
-        cap: cap.toString(),
+        cap: sheetCap.toString(),
         expiry: expiry.toString(),
-        scope: agent.wants.actions,
+        scope: a.wants.actions,
         receipts: [],
         taskCursor: 0,
         status: 'active',
-        lastResult: 'Hired — credential issued by your wallet.',
+        lastResult: '',
       };
       persist(current);
-      setSheet(null);
-    });
+      setSheetAgent(null);
+      go('dashboard');
+      showToast(`${a.name} is working for you. Credential issued — private, capped, revocable.`);
+    } catch (e) {
+      setSheetAgent(null);
+      showToast(`Hiring failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setProving(false);
+    }
+  }, [sheetAgent, sheetCap, proving, persist, go, showToast]);
 
-  const work = (agentId: string) => {
-    const agent = agentById(agentId);
-    return run(`${agent.name} is proving authorization — approve in your wallet…`, async () => {
-      const employment = withEmployment(agentId);
-      if (employment.status === 'fired') throw new Error(`${agent.name} was fired`);
-      const task = agent.tasks[employment.taskCursor % agent.tasks.length];
-      await agentRef.current!.setPrivateState({
-        agentSecretKey: fromHexStr(employment.agentSkHex),
-        terms: employmentTerms(employment),
-        mandateSalt: fromHexStr(employment.saltHex),
-        timeBound: timeBound(),
-      });
-      const result = await agentRef.current!.proveAuthorized(
-        fromHexStr(employment.mandateIdHex),
-        BigInt(task.action),
-        task.amount,
-      );
+  // ------------------------------------------------------------ agent state
+  const agentState = (e: StoredEmployment) => ({
+    agentSecretKey: fromHexStr(e.agentSkHex),
+    terms: makeTerms(BigInt(e.cap), BigInt(e.expiry), derivePublicKey(fromHexStr(e.agentSkHex)), e.scope),
+    mandateSalt: fromHexStr(e.saltHex),
+    timeBound: timeBound(),
+  });
+
+  const run = useCallback(
+    async (id: string) => {
+      if (busyAgent) return;
+      const a = agentById(id);
       const current = loadSession();
-      const stored = current.employments[agentId];
-      stored.taskCursor += 1;
-      stored.receipts.push({
-        label: task.label,
-        action: task.action,
-        amount: task.amount.toString(),
-        requestId: toHex(result.requestId),
-        txHash: result.txHash,
-      });
-      stored.lastResult = `${task.label} — authorized.`;
-      persist(current);
-    });
-  };
-
-  const testLimits = (agentId: string) => {
-    const agent = agentById(agentId);
-    return run(`${agent.name} is attempting something you never allowed…`, async () => {
-      const employment = withEmployment(agentId);
-      const forbidden = ACTION_LABELS.findIndex((_, i) => !employment.scope.includes(i));
-      await agentRef.current!.setPrivateState({
-        agentSecretKey: fromHexStr(employment.agentSkHex),
-        terms: employmentTerms(employment),
-        mandateSalt: fromHexStr(employment.saltHex),
-        timeBound: timeBound(),
-      });
+      const e = current.employments[id];
+      if (!e || e.status === 'fired') return;
+      setBusyAgent(id);
       try {
-        await agentRef.current!.proveAuthorized(fromHexStr(employment.mandateIdHex), BigInt(forbidden), 1n);
-        setResult(agentId, 'UNEXPECTED: the forbidden action was accepted!');
-      } catch {
-        setResult(
-          agentId,
-          `Blocked before it could happen: no proof exists for a '${ACTION_LABELS[forbidden]}' action you never allowed.`,
+        const task = a.tasks[e.taskCursor % a.tasks.length];
+        await agentRef.current!.setPrivateState(agentState(e));
+        const result = await agentRef.current!.proveAuthorized(
+          fromHexStr(e.mandateIdHex),
+          BigInt(task.action),
+          task.amount,
         );
+        e.taskCursor += 1;
+        e.receipts.push({
+          label: task.label,
+          action: task.action,
+          amount: task.amount.toString(),
+          requestId: toHex(result.requestId),
+          txHash: result.txHash,
+          agentId: id,
+          mandateIdHex: e.mandateIdHex,
+          at: Date.now(),
+        });
+        persist(current);
+        showToast(`Done: ${task.label} · receipt rcpt_${toHex(result.requestId).slice(0, 6)} posted.`);
+      } catch (err) {
+        showToast(`${a.name} could not prove that: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setBusyAgent(null);
       }
-    });
-  };
+    },
+    [busyAgent, persist, showToast],
+  );
 
-  const fire = (agentId: string) => {
-    const agent = agentById(agentId);
-    return run(`Revoking ${agent.name}'s credential — approve in your wallet…`, async () => {
-      const employment = withEmployment(agentId);
+  const test = useCallback(
+    async (id: string) => {
+      if (busyAgent) return;
+      const a = agentById(id);
       const current = loadSession();
+      const e = current.employments[id];
+      if (!e || e.status === 'fired') return;
+      setBusyAgent(id);
+      const forbidden = ACTION_LABELS.findIndex((_, i) => !e.scope.includes(i));
+      try {
+        await agentRef.current!.setPrivateState(agentState(e));
+        await agentRef.current!.proveAuthorized(fromHexStr(e.mandateIdHex), BigInt(forbidden), 1n);
+        showToast('UNEXPECTED: the forbidden action was accepted!');
+      } catch {
+        setBlocked((b) => ({ ...b, [id]: { action: ACTION_LABELS[forbidden] } }));
+        showToast(`Rejected at proof time — the chain never saw ${a.name}'s attempt.`);
+      } finally {
+        setBusyAgent(null);
+      }
+    },
+    [busyAgent, showToast],
+  );
+
+  const confirmFire = useCallback(async () => {
+    const id = fireId;
+    if (!id || firing) return;
+    const a = agentById(id);
+    setFiring(true);
+    try {
+      const current = loadSession();
+      const e = current.employments[id];
       await principalRef.current!.setPrivateState({
         principalSecretKey: fromHexStr(current.principalSkHex),
-        mandateNonce: fromHexStr(employment.nonceHex),
-        terms: employmentTerms(employment),
-        mandateSalt: fromHexStr(employment.saltHex),
+        mandateNonce: fromHexStr(e.nonceHex),
+        terms: makeTerms(BigInt(e.cap), BigInt(e.expiry), derivePublicKey(fromHexStr(e.agentSkHex)), e.scope),
+        mandateSalt: fromHexStr(e.saltHex),
       });
-      await principalRef.current!.revokeMandate(fromHexStr(employment.mandateIdHex));
-      const stored = current.employments[agentId];
-      stored.status = 'fired';
-      stored.lastResult = 'Fired — credential revoked on-chain.';
+      await principalRef.current!.revokeMandate(fromHexStr(e.mandateIdHex));
+      e.status = 'fired';
+      e.revokedAt = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
       persist(current);
-    });
-  };
+      setFireId(null);
+      showToast(`${a.name} fired. Credential revoked on-chain — locked out everywhere, forever.`);
+    } catch (e) {
+      showToast(`Revocation failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setFiring(false);
+    }
+  }, [fireId, firing, persist, showToast]);
 
-  // ------------------------------------------------------------------ views
-  if (phase !== 'ready') {
-    return (
-      <div className="gate">
-        <div className="dot" aria-hidden="true" />
-        <div className="wordmark">Grant</div>
-        <p className="gate-tag">Hire AI agents with permissions, not passwords.</p>
-        {phase === 'connect' && (
-          <>
-            <button className="btn allow" onClick={() => void connect()}>
-              Connect wallet
-            </button>
-            <p className="gate-hint">
-              Works with any Midnight wallet — Lace, Gero, or 1AM — set to this network. Your wallet signs every
-              credential; your identity never leaves it.
-            </p>
-          </>
-        )}
-        {(phase === 'connecting' || phase === 'setup') && <p className="gate-status">{status}</p>}
-        {error && <p className="gate-error">{error}</p>}
-      </div>
-    );
-  }
+  // ---------------------------------------------------------------- derive
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
 
   const employments = Object.values(session.employments);
+  const hiredCount = employments.filter((e) => e.status === 'active').length;
+  const allReceipts = employments.flatMap((e) => e.receipts).sort((a, b) => b.at - a.at);
+  const currentAgent = agentId ? agentById(agentId) : null;
+  const currentReceipt = receiptId ? allReceipts.find((r) => r.requestId === receiptId) : null;
+  const sheetA = sheetAgent ? agentById(sheetAgent) : null;
 
   return (
-    <div className="app">
-      <header>
-        <div>
-          <div className="wordmark">Grant</div>
-          <div className="tag">Hire AI agents with permissions, not passwords.</div>
-        </div>
-        <div className="grow" />
-        {busy && <span className="pill busy-pill">{status || 'working…'}</span>}
-        <span className="pill">wallet connected ●</span>
-        <span className="pill" title={session.contractAddress}>
-          registry {session.contractAddress?.slice(0, 10)}…
-        </span>
-      </header>
+    <div>
+      <Nav view={view} hiredCount={hiredCount} wallet={wallet} go={go} />
 
-      <main>
-        {error && <div className="error-bar">{error}</div>}
-
-        <h2 className="sec">Agents for hire</h2>
-        <div className="grid">
-          {AGENTS.map((agent) => {
-            const employment = session.employments[agent.id];
-            return (
-              <div className="agent-card" key={agent.id}>
-                <div className="agent-head">
-                  <div className="avatar">{agent.emoji}</div>
-                  <h3>{agent.name}</h3>
-                </div>
-                <p>{agent.blurb}</p>
-                <div className="wants">
-                  {agent.wants.actions.map((i) => (
-                    <span className="want" key={i}>
-                      {ACTION_LABELS[i]}
-                    </span>
-                  ))}
-                  <span className="want">up to {agent.wants.cap.toString()}</span>
-                  <span className="want">{agent.wants.days} days</span>
-                </div>
-                {employment?.status === 'active' ? (
-                  <div className="hired-note">Working for you ✓</div>
-                ) : (
-                  <button
-                    className="hire-btn"
-                    disabled={busy}
-                    onClick={() => setSheet({ agent, cap: agent.wants.cap.toString() })}
-                  >
-                    Hire {agent.name}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <h2 className="sec">Working for you</h2>
-        {employments.length === 0 ? (
-          <div className="empty-emps">Nobody yet. Hire an agent above — you stay anonymous, it gets a leash.</div>
-        ) : (
-          employments.map((e) => {
-            const agent = agentById(e.agentId);
-            const spent = e.receipts.reduce((sum, r) => sum + Number(r.amount), 0);
-            const frac = Math.min(1, spent / Number(e.cap));
-            const circumference = 2 * Math.PI * 32;
-            return (
-              <div className={`emp-card ${e.status}`} key={e.agentId}>
-                <div className="ringwrap">
-                  <div className="ring">
-                    <svg width="74" height="74">
-                      <circle cx="37" cy="37" r="32" fill="none" stroke="#edf1f6" strokeWidth="7" />
-                      <circle
-                        cx="37"
-                        cy="37"
-                        r="32"
-                        fill="none"
-                        stroke={frac < 1 ? '#2f6bff' : '#d64545'}
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={circumference * (1 - frac)}
-                      />
-                    </svg>
-                    <div className="emoji">{agent.emoji}</div>
-                  </div>
-                  <span className="ring-label">
-                    {spent} / {e.cap}
-                  </span>
-                </div>
-                <div className="emp-main">
-                  <h3>
-                    {agent.name}{' '}
-                    <span className={`badge ${e.status}`}>{e.status === 'active' ? 'working' : 'fired'}</span>
-                  </h3>
-                  <div className="emp-scope">
-                    may {e.scope.map((i) => ACTION_LABELS[i]).join(' + ')} · until{' '}
-                    {new Date(Number(e.expiry)).toISOString().slice(0, 10)} · credential {e.mandateIdHex.slice(0, 12)}…
-                  </div>
-                  <div className="receipts">
-                    {e.receipts.length === 0 ? (
-                      <div className="none">No tasks yet — press “Run a task”.</div>
-                    ) : (
-                      e.receipts
-                        .slice(-6)
-                        .reverse()
-                        .map((r) => (
-                          <div className="receipt" key={r.requestId}>
-                            <span>{r.label}</span>
-                            <span className="amt">{r.amount}</span>
-                            <span className="rid">receipt {r.requestId.slice(0, 12)}…</span>
-                          </div>
-                        ))
-                    )}
-                  </div>
-                  <div className="lastline">{e.lastResult}</div>
-                </div>
-                <div className="emp-actions">
-                  {e.status === 'active' ? (
-                    <>
-                      <button className="act-btn" disabled={busy} onClick={() => void work(e.agentId)}>
-                        Run a task
-                      </button>
-                      <button className="act-btn" disabled={busy} onClick={() => void testLimits(e.agentId)}>
-                        Test the limits
-                      </button>
-                      <button className="act-btn fire" disabled={busy} onClick={() => void fire(e.agentId)}>
-                        Fire
-                      </button>
-                    </>
-                  ) : (
-                    <div className="locked">Credential revoked on-chain — it can’t prove anything anymore.</div>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </main>
-
-      {sheet && (
-        <div
-          className="sheet-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={(event) => {
-            if (event.target === event.currentTarget && !busy) setSheet(null);
+      {view === 'landing' && (
+        <Landing
+          seeItWork={() => {
+            setAgentId('submanager');
+            go('agent');
           }}
-        >
-          <div className="sheet">
-            <div className="avatar big">{sheet.agent.emoji}</div>
-            <h3>
-              “<span className="name">{sheet.agent.name}</span>” wants to:
-            </h3>
-            <div className="grants">
-              <div className="grant-row">
-                <span className="ic">✓</span>
-                <span>{sheet.agent.wants.actions.map((i) => ACTION_LABELS[i]).join(' and ')} on your behalf</span>
-              </div>
-              <div className="grant-row">
-                <span className="ic">✓</span>
-                <span>spend up to</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={sheet.cap}
-                  aria-label="spend cap"
-                  onChange={(event) => setSheet({ ...sheet, cap: event.target.value })}
-                />
-                <span className="hint">you can lower this</span>
-              </div>
-              <div className="grant-row">
-                <span className="ic">✓</span>
-                <span>for {sheet.agent.wants.days} days, unless you fire it first</span>
-              </div>
-            </div>
-            <p className="fine">
-              Allowing issues a private credential on Midnight, signed by <b>your wallet</b>. <b>{sheet.agent.name}</b>{' '}
-              can act only inside these limits — and never learns who you are. You can fire it anytime.
-            </p>
-            {busy ? (
-              <div className="prog">{status}</div>
-            ) : (
-              <div className="sheet-btns">
-                <button className="deny" onClick={() => setSheet(null)}>
-                  Don&apos;t allow
-                </button>
-                <button className="allow" onClick={() => void hire(sheet.agent, BigInt(sheet.cap || '1'))}>
-                  Allow
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+          goDirectory={() => go('directory')}
+        />
+      )}
+      {view === 'directory' && (
+        <Directory
+          cat={cat}
+          q={q}
+          setCat={setCat}
+          setQ={setQ}
+          employments={session.employments}
+          openAgent={(id) => {
+            setAgentId(id);
+            go('agent');
+          }}
+        />
+      )}
+      {view === 'agent' && currentAgent && (
+        <AgentDetail
+          agent={currentAgent}
+          employment={session.employments[currentAgent.id]}
+          latestReceipt={allReceipts.find((r) => r.agentId === currentAgent.id)}
+          goDirectory={() => go('directory')}
+          hire={() => requestHire(currentAgent.id)}
+        />
+      )}
+      {view === 'dashboard' && (
+        <Dashboard
+          employments={employments}
+          receipts={allReceipts}
+          busyAgent={busyAgent}
+          blocked={blocked}
+          dismissBlocked={(id) => setBlocked((b) => ({ ...b, [id]: undefined }))}
+          goDirectory={() => go('directory')}
+          run={(id) => void run(id)}
+          test={(id) => void test(id)}
+          askFire={setFireId}
+          openReceipt={(id) => {
+            setReceiptId(id);
+            go('receipt');
+          }}
+        />
+      )}
+      {view === 'receipt' && currentReceipt && (
+        <ReceiptDetail receipt={currentReceipt} goDashboard={() => go('dashboard')} />
+      )}
+      {view === 'onboarding' && (
+        <Onboarding connecting={connecting} status={connStatus} error={connError} connect={() => void connect()} />
       )}
 
-      <footer>
-        <div className="strip-head">
-          <h3>What the rest of the world sees</h3>
-          <span className="exp">pseudonymous credentials and receipts — no identities, caps, scopes, or expiries</span>
-        </div>
-        <div className="strip">
-          {ledger
-            ? `${ledger.mandates.length} credential(s) · ${ledger.authorizations} authorization(s) · ${ledger.receiptCount} receipt(s)   ` +
-              ledger.mandates
-                .map((m) => `[${m.id.slice(0, 10)}… spent ${m.spent}${m.revoked ? ' REVOKED' : ''}]`)
-                .join(' ')
-            : '—'}
-        </div>
-      </footer>
+      {sheetA && (
+        <PermissionSheet
+          agent={sheetA}
+          cap={sheetCap}
+          sheetNo={sheetCount}
+          proving={proving}
+          provingText={`Your wallet approves, then a zero-knowledge proof is generated. ${sheetA.name} will get a leash — never your keys.`}
+          capDown={() => setSheetCap((c) => (c > 5n ? c - 5n : c))}
+          capUp={() => setSheetCap((c) => (sheetA && c + 5n <= sheetA.wants.cap ? c + 5n : c))}
+          deny={() => setSheetAgent(null)}
+          allow={() => void allow()}
+        />
+      )}
+      {fireId && (
+        <FireModal
+          agent={agentById(fireId)}
+          firing={firing}
+          cancel={() => setFireId(null)}
+          confirm={() => void confirmFire()}
+        />
+      )}
+      {toast && <Toast text={toast} />}
     </div>
   );
 };

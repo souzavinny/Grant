@@ -25,6 +25,9 @@ export type StoredReceipt = {
   amount: string;
   requestId: string;
   txHash: string;
+  agentId: string;
+  mandateIdHex: string;
+  at: number;
 };
 
 export type StoredEmployment = {
@@ -40,6 +43,7 @@ export type StoredEmployment = {
   taskCursor: number;
   status: 'active' | 'fired';
   lastResult: string;
+  revokedAt?: string;
 };
 
 export type StoredSession = {
@@ -50,10 +54,36 @@ export type StoredSession = {
 
 const KEY = 'grant-session-v1';
 
+/** Fill fields that older sessions (pre-redesign schema) didn't store. */
+const migrate = (session: StoredSession): { session: StoredSession; changed: boolean } => {
+  let changed = false;
+  for (const [agentId, employment] of Object.entries(session.employments ?? {})) {
+    if (employment.agentId === undefined) {
+      employment.agentId = agentId;
+      changed = true;
+    }
+    employment.receipts = (employment.receipts ?? []).map((receipt) => {
+      if (receipt.agentId !== undefined && receipt.at !== undefined) return receipt;
+      changed = true;
+      return {
+        ...receipt,
+        agentId: receipt.agentId ?? agentId,
+        mandateIdHex: receipt.mandateIdHex ?? employment.mandateIdHex,
+        at: receipt.at ?? Date.now(),
+      };
+    });
+  }
+  return { session, changed };
+};
+
 export const loadSession = (): StoredSession => {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as StoredSession;
+    if (raw) {
+      const { session, changed } = migrate(JSON.parse(raw) as StoredSession);
+      if (changed) saveSession(session);
+      return session;
+    }
   } catch {
     /* corrupted session — start fresh */
   }
