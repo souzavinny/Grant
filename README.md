@@ -1,3 +1,28 @@
+# Grant — hire AI agents with permissions, not passwords
+
+**The app.** Grant is a directory of AI agents you can hire the way you install
+an app: an OS-style permission sheet says exactly what the agent wants —
+*"SubManager wants to: subscribe on your behalf · spend up to 30 · for 30
+days"* — and you can lower the cap before tapping **Allow**. Allowing issues a
+private, revocable credential on [Midnight](https://midnight.network). The
+agent then works for you: every task it performs is a zero-knowledge proof that
+the action was authorized, leaving a receipt on the public ledger. It never
+holds your passwords, cards, or identity — and one tap **fires** it, revoking
+the credential on-chain so it can't prove anything, anywhere, ever again.
+
+```bash
+cd agentpass-cli && npm run app     # → http://localhost:8791
+```
+
+The permission prompt is the most rehearsed trust gesture in computing. Grant
+keeps the gesture and upgrades the guarantee: app permissions are promises;
+these are cryptographically enforced, and the grantor stays anonymous.
+
+Grant is built on **AgentPass**, the delegation-credential infrastructure in
+this same repo (below) — app and infra ship together.
+
+---
+
 # AgentPass — private delegation credentials for AI agents
 
 **Know Your Agent, without knowing the human.** AgentPass lets a person issue a
@@ -9,7 +34,7 @@ authorized and **nothing else**: not who delegated, not the cap, not the scope,
 not the expiry, and not any link between the mandate and the principal's other
 activity.
 
-Built for the **Midnight Buildathon 2026** (Wave 1).
+Built for the **Midnight Buildathon 2026** (Wave 1: infra + the Grant app).
 
 > 2025 gave agents payment rails — Visa Intelligent Commerce, Mastercard Agent
 > Pay, Google AP2, Stripe/OpenAI ACP. None of them has a privacy layer: today,
@@ -44,8 +69,8 @@ an observer can and cannot learn, and the Wave 2 unlinkability roadmap — is in
 |---|---|
 | [`contract/`](contract) | The **AgentPass Compact contract** (`src/agentpass.compact`), witnesses, simulator, and 15 contract tests |
 | [`api/`](api) | TypeScript API adapting the deployed contract for the two parties (`src/agentpass.ts`) |
-| [`agentpass-cli/`](agentpass-cli) | Interactive demo CLI: one process plays principal, agent, verifier, observer, and attacker |
-| [`agentpass-ui/`](agentpass-ui) | Web UI (being ported from the template in Wave 1→2) |
+| [`agentpass-cli/`](agentpass-cli) | **Grant** (`npm run app` + `public/grant.html`), the Control Room engineer console (`npm run demo:server`), the interactive CLI tour, and two scripted e2e suites (`npm run demo`, `npm run app:e2e`) |
+| [`agentpass-ui/`](agentpass-ui) | Lace-wallet web UI (template port planned for Wave 2) |
 | [`docs/`](docs) | Privacy design document |
 
 The repo started from the official
@@ -93,15 +118,16 @@ npm run compact          # compiles agentpass.compact (and the retained template
 # 2. Run the contract test suite — 15 AgentPass tests incl. adversarial cases
 npm test -- --run
 
-# 3. Automated end-to-end check on a local (undeployed) devnet
-#    spins up node + indexer + proof server via Docker, generates real ZK
-#    proofs, and asserts the whole protocol incl. the adversarial cases
+# 3. Run Grant — the app (spins up a local devnet, then serves the UI)
 cd ../agentpass-cli
-npm run demo
+npm run app          # → http://localhost:8791
 
-# 3b. Same flow as an interactive tour (deploy, issue, authorize, verify,
-#     observe, revoke — you drive the menu)
-npm run standalone
+# 4. Automated end-to-end checks on a local (undeployed) devnet — real proofs
+npm run app:e2e      # Grant flows: 2 agents, cross-agent theft, limits, firing
+npm run demo         # protocol demo: issue, authorize, verify, revoke
+
+# Other surfaces: npm run demo:server (Control Room engineer console, :8790),
+# npm run standalone (interactive CLI tour)
 ```
 
 > Using Colima instead of Docker Desktop? testcontainers needs the socket

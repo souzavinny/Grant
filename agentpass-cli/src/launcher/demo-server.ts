@@ -222,7 +222,7 @@ const server = http.createServer((req, res) => {
     if (req.method === 'POST' && url === '/api/issue') {
       const body = await readBody(req);
       await withBusy(res, async () => {
-        const cap = BigInt(String(body.cap ?? '100'));
+        const cap = typeof body.cap === 'string' || typeof body.cap === 'number' ? BigInt(body.cap) : 100n;
         const actions = (body.actions as number[] | undefined) ?? [0, 2];
         const days = Number(body.days ?? 30);
         // a fresh mandate id per issuance
@@ -233,7 +233,10 @@ const server = http.createServer((req, res) => {
         say('principal', `Issuing mandate: cap ${cap}, actions [${actions.join(',')}], ${days} days…`);
         const issued = await principal!.issueMandate();
         mandateId = issued.mandateId;
-        say('principal', `Mandate issued. Pseudonymous id ${toHex(issued.mandateId).slice(0, 18)}… (tx ${issued.txHash.slice(0, 16)}…)`);
+        say(
+          'principal',
+          `Mandate issued. Pseudonymous id ${toHex(issued.mandateId).slice(0, 18)}… (tx ${issued.txHash.slice(0, 16)}…)`,
+        );
         say('principal', 'Terms + salt handed to the agent off-chain.');
         return { mandateId: toHex(issued.mandateId), txHash: issued.txHash };
       });
@@ -244,11 +247,14 @@ const server = http.createServer((req, res) => {
       await withBusy(res, async () => {
         if (!mandateId || !terms) throw new Error('no mandate issued yet');
         const action = BigInt(Number(body.action ?? 0));
-        const amount = BigInt(String(body.amount ?? '40'));
+        const amount = typeof body.amount === 'string' || typeof body.amount === 'number' ? BigInt(body.amount) : 40n;
         await agent!.setPrivateState(agentState());
         say('agent', `Requesting authorization: action ${action}, amount ${amount} — generating ZK proof…`);
         const result = await agent!.proveAuthorized(mandateId, action, amount);
-        say('agent', `Authorized. Receipt ${toHex(result.requestId).slice(0, 18)}… (tx ${result.txHash.slice(0, 16)}…)`);
+        say(
+          'agent',
+          `Authorized. Receipt ${toHex(result.requestId).slice(0, 18)}… (tx ${result.txHash.slice(0, 16)}…)`,
+        );
         return { requestId: toHex(result.requestId), txHash: result.txHash };
       });
       return;
@@ -256,11 +262,14 @@ const server = http.createServer((req, res) => {
     if (req.method === 'POST' && url === '/api/verify') {
       const body = await readBody(req);
       await withBusy(res, async () => {
-        const requestId = fromHexStr(String(body.requestId ?? ''));
+        const requestId = fromHexStr(typeof body.requestId === 'string' ? body.requestId : '');
         const snapshot = await ledgerSnapshot();
         const receipt = snapshot?.receipts.find((r) => r.requestId === toHex(requestId));
         if (receipt) {
-          say('verifier', `Receipt ${toHex(requestId).slice(0, 18)}… VERIFIED: action ${receipt.action}, amount ${receipt.amount}.`);
+          say(
+            'verifier',
+            `Receipt ${toHex(requestId).slice(0, 18)}… VERIFIED: action ${receipt.action}, amount ${receipt.amount}.`,
+          );
           return { found: true, receipt };
         }
         say('verifier', `Receipt ${toHex(requestId).slice(0, 18)}… not found on the ledger.`);
@@ -284,7 +293,7 @@ const server = http.createServer((req, res) => {
       await withBusy(res, async () => {
         if (!mandateId || !terms) throw new Error('no mandate issued yet');
         await agent!.setPrivateState(agentState());
-        const kind = String(body.kind ?? 'scope');
+        const kind = typeof body.kind === 'string' ? body.kind : 'scope';
         const forbidden = terms.scope.findIndex((allowed) => !allowed);
         const [action, amount, label] =
           kind === 'scope' && forbidden >= 0

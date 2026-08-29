@@ -93,11 +93,7 @@ try {
   const mandateSalt = randomBytes(32);
 
   // 1. Principal deploys the contract
-  const principal = await AgentPassAPI.deploy(
-    providers,
-    { principalSecretKey, mandateNonce },
-    logger,
-  );
+  const principal = await AgentPassAPI.deploy(providers, { principalSecretKey, mandateNonce }, logger);
   console.log(`Deployed AgentPass at ${principal.deployedContractAddress}`);
 
   // 2. Agent joins the same contract with its own private state
@@ -110,12 +106,7 @@ try {
   );
 
   // 3. Principal issues a mandate: cap 100, actions {purchase, subscribe}, 30 days
-  const terms = makeTerms(
-    100n,
-    BigInt(Date.now() + 30 * 86_400_000),
-    derivePublicKey(agentSecretKey),
-    [0, 2],
-  );
+  const terms = makeTerms(100n, BigInt(Date.now() + 30 * 86_400_000), derivePublicKey(agentSecretKey), [0, 2]);
   await principal.setPrivateState({ principalSecretKey, mandateNonce, terms, mandateSalt });
   const { mandateId } = await principal.issueMandate();
   check(mandateId.length === 32, `mandate issued: ${toHex(mandateId).slice(0, 18)}…`);

@@ -1,5 +1,12 @@
 # AgentPass — Privacy Design
 
+> **Grant mapping.** The Grant app is a thin product skin over these exact
+> circuits: *Hire* (Allow on the permission sheet) = `issueMandate`, an agent
+> *task* = `proveAuthorized`, *Test the limits* = a deliberately out-of-scope
+> `proveAuthorized` that fails at proof time, *Fire* = `revokeMandate`. Each
+> directory agent holds its own secret key, so a credential is usable only by
+> the one agent it was granted to.
+
 AgentPass issues **private delegation credentials for AI agents** ("Know Your Agent").
 A human principal grants an agent a *mandate* — spend cap, allowed action
 categories, expiry — and the agent proves, in zero knowledge, that a specific

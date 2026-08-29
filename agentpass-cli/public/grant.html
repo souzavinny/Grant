@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grant — hire AI agents with permissions, not passwords</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ground: #f4f6f8;
+    --ink: #17202b;
+    --muted: #5c6b7c;
+    --card: #ffffff;
+    --hair: #e1e7ee;
+    --allow: #2f6bff;       /* the Allow button — the whole product in one color */
+    --ok: #1e9e6a;
+    --fire: #d64545;
+    --strip: #eaeff5;
+    --disp: "Outfit", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  button { font: inherit; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: wait; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--allow); outline-offset: 2px; }
+
+  /* proving bar */
+  #proving {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30;
+    background: linear-gradient(90deg, transparent, var(--allow), transparent);
+    background-size: 40% 100%; background-repeat: no-repeat;
+    animation: slide 1.2s linear infinite; display: none;
+  }
+  .busy #proving { display: block; }
+  @keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+  @media (prefers-reduced-motion: reduce) { #proving { animation: none; background: var(--allow); } }
+
+  header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 22px clamp(16px, 5vw, 48px) 16px;
+  }
+  .wordmark { font: 700 26px/1 var(--disp); letter-spacing: -0.03em; }
+  .wordmark::first-letter { color: var(--allow); }
+  header .tag { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+  header .grow { flex: 1; }
+  .pill {
+    font: 500 12px/1 var(--mono); padding: 6px 11px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--hair); color: var(--muted);
+  }
+  .pill b { color: var(--ok); font-weight: 500; }
+
+  main { flex: 1; padding: 4px clamp(16px, 5vw, 48px) 24px; max-width: 1180px; width: 100%; margin: 0 auto; }
+  h2.sec {
+    font: 600 13px/1 var(--disp); text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--muted); margin: 26px 0 14px;
+  }
+
+  /* directory */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .agent-card {
+    background: var(--card); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 18px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .agent-head { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 12px; background: #eef3fb;
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+  }
+  .agent-head h3 { font: 600 17px/1.2 var(--disp); }
+  .agent-card p { color: var(--muted); font-size: 13.5px; flex: 1; }
+  .wants { display: flex; gap: 6px; flex-wrap: wrap; }
+  .want {
+    font: 500 12px/1 var(--disp); padding: 6px 9px; border-radius: 7px;
+    background: #f0f4f9; color: #40506a; border: 1px solid var(--hair);
+  }
+  .hire-btn {
+    font: 600 14px/1 var(--disp); padding: 11px 0; border-radius: 9px;
+    border: 1px solid var(--hair); background: var(--card); color: var(--allow); width: 100%;
+  }
+  .hire-btn:hover:not(:disabled) { background: #f3f7ff; }
+  .agent-card .hired-note { font: 500 13px/1 var(--disp); color: var(--ok); text-align: center; padding: 11px 0; }
+
+  /* employments */
+  .emp-card {
+    background: var(--card); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 18px; display: grid; grid-template-columns: auto 1fr auto; gap: 16px; margin-bottom: 12px;
+  }
+  .emp-card.fired { opacity: 0.75; background: #f6f6f6; }
+  .ringwrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .ring { position: relative; width: 74px; height: 74px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .emoji { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .ring-label { font: 500 11.5px/1 var(--mono); color: var(--muted); }
+  .emp-main h3 { font: 600 16px/1.2 var(--disp); display: flex; gap: 8px; align-items: baseline; }
+  .badge { font: 600 10.5px/1 var(--disp); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 6px; }
+  .badge.active { background: #e5f5ee; color: var(--ok); }
+  .badge.fired { background: #fbe9e9; color: var(--fire); }
+  .emp-scope { color: var(--muted); font-size: 12.5px; margin: 3px 0 8px; }
+  .receipts { display: flex; flex-direction: column; gap: 5px; }
+  .receipt { display: flex; gap: 10px; align-items: baseline; font-size: 13px; }
+  .receipt .amt { font: 500 13px/1 var(--mono); }
+  .receipt .rid { font: 400 11px/1 var(--mono); color: #97a3b2; }
+  .receipts .none { color: #97a3b2; font-size: 13px; }
+  .lastline { margin-top: 8px; font: 500 12.5px/1.4 var(--disp); color: var(--muted); min-height: 16px; }
+  .emp-actions { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+  .act-btn { font: 500 13px/1 var(--disp); padding: 9px 14px; border-radius: 8px; border: 1px solid var(--hair); background: var(--card); }
+  .act-btn.fire { color: var(--fire); border-color: #f2cccc; }
+  .locked { font: 500 12.5px/1.4 var(--disp); color: var(--fire); max-width: 130px; }
+  .empty-emps { color: var(--muted); background: var(--card); border: 1px dashed var(--hair); border-radius: 14px; padding: 22px; text-align: center; }
+
+  /* permission sheet — the signature element */
+  #sheet-backdrop {
+    position: fixed; inset: 0; background: rgba(23, 32, 43, 0.42);
+    display: none; align-items: center; justify-content: center; z-index: 40; padding: 18px;
+  }
+  #sheet-backdrop.open { display: flex; }
+  .sheet {
+    background: var(--card); border-radius: 18px; width: 380px; max-width: 100%;
+    padding: 26px 24px 20px; text-align: center;
+    box-shadow: 0 24px 60px rgba(23, 32, 43, 0.25);
+  }
+  .sheet .avatar { width: 56px; height: 56px; font-size: 30px; margin: 0 auto 10px; }
+  .sheet h3 { font: 600 18px/1.3 var(--disp); }
+  .sheet h3 span { color: var(--allow); }
+  .grants { text-align: left; margin: 16px 0 6px; display: flex; flex-direction: column; gap: 9px; }
+  .grant-row { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+  .grant-row .ic { color: var(--allow); font-weight: 700; }
+  .grant-row input {
+    font: 500 14px/1 var(--mono); width: 84px; padding: 6px 8px;
+    border: 1px solid var(--hair); border-radius: 7px;
+  }
+  .grant-row .hint { font-size: 11.5px; color: var(--muted); }
+  .sheet .fine {
+    font-size: 12px; color: var(--muted); margin: 12px 0 16px; line-height: 1.5;
+  }
+  .sheet-btns { display: flex; gap: 10px; }
+  .sheet-btns button { flex: 1; padding: 12px 0; border-radius: 10px; font: 600 14.5px/1 var(--disp); border: 1px solid var(--hair); }
+  #sheet-deny { background: var(--card); color: var(--ink); }
+  #sheet-allow { background: var(--allow); color: #fff; border-color: var(--allow); }
+  .sheet .prog { font: 500 13px/1.5 var(--disp); color: var(--allow); min-height: 40px; display: none; align-items: center; justify-content: center; }
+
+  /* trust strip */
+  footer {
+    background: var(--strip); border-top: 1px solid var(--hair);
+    padding: 14px clamp(16px, 5vw, 48px) 18px;
+  }
+  footer .strip-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+  footer h3 { font: 600 12px/1 var(--disp); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  footer .exp { font-size: 12px; color: var(--muted); }
+  #strip { font: 12px/1.7 var(--mono); color: #40506a; }
+  #strip .rev { color: var(--fire); }
+
+  /* boot overlay */
+  #boot {
+    position: fixed; inset: 0; background: var(--ground); z-index: 50;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px;
+  }
+  #boot .wordmark { font-size: 34px; }
+  #boot p { font: 400 13.5px/1.5 var(--mono); color: var(--muted); }
+  #boot .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--allow); animation: blink 1.2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: 0.15; } }
+
+  @media (max-width: 700px) { .emp-card { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <div id="proving" aria-hidden="true"></div>
+
+  <div id="boot">
+    <div class="dot" aria-hidden="true"></div>
+    <div class="wordmark">Grant</div>
+    <p id="boot-msg">Starting local devnet containers…</p>
+  </div>
+
+  <header>
+    <div>
+      <div class="wordmark">Grant</div>
+      <div class="tag">Hire AI agents with permissions, not passwords.</div>
+    </div>
+    <div class="grow"></div>
+    <span class="pill" id="busy-pill" hidden>an agent is proving…</span>
+    <span class="pill">midnight devnet <b>●</b></span>
+  </header>
+
+  <main>
+    <h2 class="sec">Agents for hire</h2>
+    <div class="grid" id="directory"></div>
+
+    <h2 class="sec">Working for you</h2>
+    <div id="employments"><div class="empty-emps">Nobody yet. Hire an agent above — you stay anonymous, it gets a leash.</div></div>
+  </main>
+
+  <!-- permission sheet -->
+  <div id="sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet">
+      <div class="avatar" id="sheet-emoji">🤖</div>
+      <h3 id="sheet-title">“<span id="sheet-name">Agent</span>” wants to:</h3>
+      <div class="grants" id="sheet-grants"></div>
+      <p class="fine">Allowing issues a private credential on Midnight. <b id="sheet-name2">The agent</b> can act only inside these limits — and never learns who you are. You can fire it anytime.</p>
+      <div class="sheet-btns" id="sheet-btns">
+        <button id="sheet-deny">Don't allow</button>
+        <button id="sheet-allow">Allow</button>
+      </div>
+      <div class="prog" id="sheet-prog">Issuing private credential — generating proof…</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="strip-head">
+      <h3>What the rest of the world sees</h3>
+      <span class="exp">pseudonymous credentials and receipts — no identities, caps, scopes, or expiries</span>
+    </div>
+    <div id="strip">—</div>
+  </footer>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let ACTIONS = [];
+  let current = null;   // agent being hired via the sheet
+  let snapshot = null;
+
+  const api = async (path, body) => {
+    const res = await fetch(path, {
+      method: body ? 'POST' : 'GET',
+      headers: body ? { 'content-type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    return data;
+  };
+
+  const wantsText = (a) =>
+    `${a.wants.actions.map((i) => ACTIONS[i]).join(' + ')} · up to ${a.wants.cap} · ${a.wants.days} days`;
+
+  const renderDirectory = () => {
+    $('directory').innerHTML = snapshot.directory.map((a) => `
+      <div class="agent-card">
+        <div class="agent-head"><div class="avatar">${a.emoji}</div><h3>${a.name}</h3></div>
+        <p>${a.blurb}</p>
+        <div class="wants">
+          ${a.wants.actions.map((i) => `<span class="want">${ACTIONS[i]}</span>`).join('')}
+          <span class="want">up to ${a.wants.cap}</span>
+          <span class="want">${a.wants.days} days</span>
+        </div>
+        ${a.hired
+          ? `<div class="hired-note">Working for you ✓</div>`
+          : `<button class="hire-btn" data-hire="${a.id}" ${snapshot.busy ? 'disabled' : ''}>Hire ${a.name}</button>`}
+      </div>`).join('');
+    document.querySelectorAll('[data-hire]').forEach((b) =>
+      b.addEventListener('click', () => openSheet(b.dataset.hire)));
+  };
+
+  const ring = (spent, cap) => {
+    const r = 32, c = 2 * Math.PI * r;
+    const frac = Math.min(1, cap > 0 ? spent / cap : 0);
+    return `<div class="ring">
+      <svg width="74" height="74">
+        <circle cx="37" cy="37" r="${r}" fill="none" stroke="#edf1f6" stroke-width="7"/>
+        <circle cx="37" cy="37" r="${r}" fill="none" stroke="${frac < 1 ? '#2f6bff' : '#d64545'}" stroke-width="7"
+          stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - frac)}"/>
+      </svg>
+      <div class="emoji"></div>
+    </div>`;
+  };
+
+  const renderEmployments = () => {
+    const emps = snapshot.employments;
+    if (!emps.length) {
+      $('employments').innerHTML = '<div class="empty-emps">Nobody yet. Hire an agent above — you stay anonymous, it gets a leash.</div>';
+      return;
+    }
+    $('employments').innerHTML = emps.map((e) => `
+      <div class="emp-card ${e.status}">
+        <div class="ringwrap">
+          ${ring(e.spent, Number(e.cap)).replace('<div class="emoji"></div>', `<div class="emoji">${e.emoji}</div>`)}
+          <span class="ring-label">${e.spent} / ${e.cap}</span>
+        </div>
+        <div class="emp-main">
+          <h3>${e.name} <span class="badge ${e.status}">${e.status === 'active' ? 'working' : 'fired'}</span></h3>
+          <div class="emp-scope">may ${e.scope.map((i) => ACTIONS[i]).join(' + ')} · until ${new Date(e.expiry).toISOString().slice(0, 10)} · credential ${e.mandateId.slice(0, 12)}…</div>
+          <div class="receipts">
+            ${e.receipts.length
+              ? e.receipts.map((r) => `<div class="receipt"><span>${r.label}</span><span class="amt">${r.amount}</span><span class="rid">receipt ${r.requestId.slice(0, 12)}…</span></div>`).join('')
+              : '<div class="none">No tasks yet — the first one starts on its own.</div>'}
+          </div>
+          <div class="lastline">${e.lastResult ?? ''}</div>
+        </div>
+        <div class="emp-actions">
+          ${e.status === 'active' ? `
+            <button class="act-btn" data-work="${e.agentId}" ${snapshot.busy ? 'disabled' : ''}>Run a task</button>
+            <button class="act-btn" data-limits="${e.agentId}" ${snapshot.busy ? 'disabled' : ''}>Test the limits</button>
+            <button class="act-btn fire" data-fire="${e.agentId}" ${snapshot.busy ? 'disabled' : ''}>Fire</button>`
+          : `<div class="locked">Credential revoked on-chain — it can't prove anything anymore.</div>`}
+        </div>
+      </div>`).join('');
+    document.querySelectorAll('[data-work]').forEach((b) =>
+      b.addEventListener('click', () => act(() => api('/api/work', { agentId: b.dataset.work }))));
+    document.querySelectorAll('[data-limits]').forEach((b) =>
+      b.addEventListener('click', () => act(() => api('/api/test-limits', { agentId: b.dataset.limits }))));
+    document.querySelectorAll('[data-fire]').forEach((b) =>
+      b.addEventListener('click', () => act(() => api('/api/fire', { agentId: b.dataset.fire }))));
+  };
+
+  const renderStrip = () => {
+    const l = snapshot.ledger;
+    if (!l) return;
+    $('strip').innerHTML =
+      `${l.mandates.length} credential(s) · ${l.authorizations} authorization(s) · ${l.receiptCount} receipt(s) &nbsp;&nbsp; ` +
+      l.mandates.map((m) => `[${m.id.slice(0, 10)}… spent ${m.spent}${m.revoked ? ' <span class="rev">revoked</span>' : ''}]`).join(' ');
+  };
+
+  const render = () => {
+    ACTIONS = snapshot.actions;
+    document.body.classList.toggle('busy', snapshot.busy);
+    $('busy-pill').hidden = !snapshot.busy;
+    renderDirectory();
+    renderEmployments();
+    renderStrip();
+  };
+
+  // permission sheet
+  const openSheet = (agentId) => {
+    current = snapshot.directory.find((a) => a.id === agentId);
+    $('sheet-emoji').textContent = current.emoji;
+    $('sheet-name').textContent = current.name;
+    $('sheet-name2').textContent = current.name;
+    $('sheet-grants').innerHTML = `
+      <div class="grant-row"><span class="ic">✓</span><span>${current.wants.actions.map((i) => ACTIONS[i]).join(' and ')} on your behalf</span></div>
+      <div class="grant-row"><span class="ic">✓</span><span>spend up to</span>
+        <input id="sheet-cap" type="number" min="1" value="${current.wants.cap}" aria-label="spend cap" />
+        <span class="hint">you can lower this</span></div>
+      <div class="grant-row"><span class="ic">✓</span><span>for ${current.wants.days} days, unless you fire it first</span></div>`;
+    $('sheet-btns').style.display = 'flex';
+    $('sheet-prog').style.display = 'none';
+    $('sheet-backdrop').classList.add('open');
+  };
+
+  $('sheet-deny').addEventListener('click', () => $('sheet-backdrop').classList.remove('open'));
+  $('sheet-backdrop').addEventListener('click', (e) => {
+    if (e.target === $('sheet-backdrop')) $('sheet-backdrop').classList.remove('open');
+  });
+  $('sheet-allow').addEventListener('click', async () => {
+    $('sheet-btns').style.display = 'none';
+    $('sheet-prog').style.display = 'flex';
+    try {
+      await api('/api/hire', { agentId: current.id, cap: $('sheet-cap').value, days: current.wants.days });
+    } catch (e) {
+      $('sheet-prog').textContent = e.message;
+      await new Promise((r) => setTimeout(r, 1800));
+    }
+    $('sheet-backdrop').classList.remove('open');
+    poll();
+  });
+
+  const act = async (fn) => {
+    document.body.classList.add('busy');
+    try { await fn(); } catch (e) { console.warn('[grant]', e.message); }
+    poll();
+  };
+
+  const poll = async () => {
+    try {
+      const s = await api('/api/state');
+      snapshot = s;
+      $('boot-msg').textContent = s.bootMessage || '';
+      if (s.status === 'ready') $('boot').style.display = 'none';
+      if (s.status === 'failed') { $('boot-msg').textContent = 'Devnet failed to start: ' + s.bootMessage; return; }
+      render();
+    } catch { /* server warming up */ }
+  };
+
+  poll();
+  setInterval(poll, 2500);
+</script>
+</body>
+</html>
