@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js?v=3"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;--paper:#F3EFE6;--card:#FCFAF4;--ink:#201D16;--mut:#6E675A;--line:#D8D0BF;--blue:#2440D4;--bluedeep:#1B32AC;--bluetint:#E6E9F8;--grn:#2F6B4F;--grntint:#E2EDE4;--red:#C6402C;--redtint:#F7E4DF;background:var(--paper);color:var(--ink);font-family:'Schibsted Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#2440D4;text-decoration:none}a:hover{color:#1B32AC;text-decoration:underline}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid #2440D4;outline-offset:2px;border-radius:2px}
+@keyframes riseIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes sheetUp{from{transform:translateY(48px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes stampIn{0%{transform:scale(1.7) rotate(-14deg);opacity:0}60%{transform:scale(.96) rotate(-5deg);opacity:1}100%{transform:scale(1) rotate(-6deg);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes toastIn{from{transform:translate(-50%,16px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+</style>
+</helmet>
+
+<!-- ============ NAV ============ -->
+<div style="position:sticky;top:0;z-index:40;background:rgba(243,239,230,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
+  <div style="max-width:1160px;margin:0 auto;display:flex;align-items:center;gap:6px;padding:12px 24px;flex-wrap:wrap">
+    <button onClick="{{ goLanding }}" style="display:flex;align-items:baseline;gap:10px;background:none;border:none;cursor:pointer;padding:4px 8px 4px 0" aria-label="Grant home">
+      <span style="display:inline-flex;transform:translateY(6px)">
+        <svg width="29" height="29" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5" style="fill:none;stroke:#201D16;stroke-width:1.6;stroke-dasharray:3.2 3;transform-origin:16px 16px;animation:spinSlow 24s linear infinite"></circle><circle cx="16" cy="16" r="10" style="fill:#201D16"></circle><path d="M11.6 16.4l3 3 5.8-6.6" style="fill:none;stroke:#F3EFE6;stroke-width:2.4"></path></svg>
+      </span>
+      <span style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;letter-spacing:-.01em">Grant</span>
+    </button>
+    <button onClick="{{ goDirectory }}" style="background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:{{ navDirColor }};padding:8px 12px;border-bottom:2px solid {{ navDirLine }}" style-hover="color:var(--blue)">Agents</button>
+    <button onClick="{{ goDashboard }}" style="background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:{{ navDashColor }};padding:8px 12px;border-bottom:2px solid {{ navDashLine }};display:flex;align-items:center;gap:8px" style-hover="color:var(--blue)">Working for you
+      <sc-if value="{{ hiredCount }}" hint-placeholder-val="{{ false }}"><span style="background:var(--blue);color:#fff;font-size:10.5px;font-weight:700;min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;letter-spacing:0">{{ hiredCount }}</span></sc-if>
+    </button>
+    <span style="flex:1"></span>
+    <sc-if value="{{ wallet }}" hint-placeholder-val="{{ false }}">
+      <span style="display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--grn);border:1px solid var(--grn);padding:7px 13px"><span style="width:7px;height:7px;border-radius:50%;background:var(--grn)"></span>{{ wallet }} CONNECTED</span>
+    </sc-if>
+    <sc-if value="{{ noWallet }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ goOnboarding }}" style="background:none;border:1px solid var(--ink);padding:8px 15px;font-size:13px;font-weight:600;cursor:pointer;transition:box-shadow .15s,transform .15s" style-hover="box-shadow:3px 3px 0 var(--ink);transform:translate(-1px,-1px)">Connect wallet</button>
+    </sc-if>
+  </div>
+</div>
+
+<!-- ============ LANDING ============ -->
+<sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+<div>
+  <div style="border-bottom:1px solid var(--line);background-image:repeating-linear-gradient(0deg,transparent,transparent 35px,rgba(32,29,22,.05) 35px,rgba(32,29,22,.05) 36px)">
+    <div style="max-width:1160px;margin:0 auto;padding:72px 24px 64px;display:flex;gap:56px;flex-wrap:wrap;align-items:center">
+      <div style="flex:1 1 460px;min-width:300px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:22px;animation:riseIn .5s both">Secured by zero-knowledge proofs on Midnight</div>
+        <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:clamp(42px,5.6vw,74px);line-height:1.0;letter-spacing:-.015em;margin:0 0 22px;text-wrap:balance;animation:riseIn .5s .08s both">Hire AI agents with <em style="color:var(--blue)">permissions</em>,<br>not passwords.</h1>
+        <p style="font-size:17px;line-height:1.6;color:var(--mut);margin:0 0 30px;max-width:52ch;text-wrap:pretty;animation:riseIn .5s .16s both">Handing an agent your passwords means total access, no limits, no undo. Grant issues it a private, revocable credential instead — it can only do what you allowed, and one tap fires it forever.</p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;animation:riseIn .5s .24s both">
+          <button onClick="{{ seeItWork }}" style="background:var(--blue);color:#fff;border:none;padding:15px 26px;font-weight:600;font-size:15.5px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)">See it work</button>
+          <button onClick="{{ goDirectory }}" style="background:var(--card);color:var(--ink);border:1px solid var(--ink);padding:15px 26px;font-weight:600;font-size:15.5px;cursor:pointer;transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)">Browse agents</button>
+        </div>
+      </div>
+      <!-- hero permission sheet: paper ticket -->
+      <div style="flex:0 1 400px;min-width:300px;margin:0 auto;animation:riseIn .6s .3s both">
+        <div style="background:var(--card);border:1px solid var(--ink);box-shadow:8px 8px 0 rgba(32,29,22,.14);padding:0;position:relative">
+          <div style="border-bottom:1px dashed var(--line);padding:12px 22px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);display:flex;justify-content:space-between"><span>Permission request</span><span>№ 0001</span></div>
+          <div style="padding:22px">
+            <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px">
+              <span style="width:46px;height:46px;background:var(--bluetint);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:23px">💳</span>
+              <div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:22px">SubManager wants to:</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut)">from Loop Labs</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:20px">
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.45"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:3px"><path d="M20 6 9 17l-5-5"></path></svg>subscribe on your behalf</div>
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.45"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:3px"><path d="M20 6 9 17l-5-5"></path></svg>spend up to <strong>$30</strong> <span style="color:var(--mut)">— you can lower this</span></div>
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.45"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:3px"><path d="M20 6 9 17l-5-5"></path></svg>for <strong>30 days</strong>, unless you fire it first</div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <span style="flex:1;text-align:center;background:var(--paper);border:1px solid var(--line);padding:12px;font-weight:600;font-size:14.5px;color:var(--mut)">Don't allow</span>
+              <span style="flex:1;text-align:center;background:var(--blue);padding:12px;font-weight:600;font-size:14.5px;color:#fff;box-shadow:3px 3px 0 var(--ink)">Allow</span>
+            </div>
+          </div>
+          <div style="position:absolute;top:-16px;right:-14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--red);border:1.5px solid var(--red);padding:6px 10px;transform:rotate(-6deg);background:var(--card)">NEVER LEARNS WHO YOU ARE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- how it works -->
+  <div style="max-width:1160px;margin:0 auto;padding:64px 24px 8px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">The whole idea</div>
+    <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:38px;letter-spacing:-.01em;margin:0 0 28px">Hire. It works. Fire.</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0;border:1px solid var(--ink);background:var(--card)">
+      <div style="padding:26px;border-right:1px solid var(--line)">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:44px;color:var(--blue);line-height:1;margin-bottom:14px">1</div>
+        <div style="font-weight:700;font-size:16px;margin-bottom:8px">Hire</div>
+        <p style="margin:0;font-size:14.5px;line-height:1.6;color:var(--mut)">Pick an agent. A permission sheet shows exactly what it wants — nothing more. Tap Allow and it gets a private credential, not your passwords.</p>
+      </div>
+      <div style="padding:26px;border-right:1px solid var(--line)">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:44px;color:var(--blue);line-height:1;margin-bottom:14px">2</div>
+        <div style="font-weight:700;font-size:16px;margin-bottom:8px">It works</div>
+        <p style="margin:0;font-size:14.5px;line-height:1.6;color:var(--mut)">Every task posts a verifiable public receipt. Anything outside its limits is blocked before it happens — no proof can exist for an action you never allowed.</p>
+      </div>
+      <div style="padding:26px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:44px;color:var(--blue);line-height:1;margin-bottom:14px">3</div>
+        <div style="font-weight:700;font-size:16px;margin-bottom:8px">Fire</div>
+        <p style="margin:0;font-size:14.5px;line-height:1.6;color:var(--mut)">One tap revokes the credential on-chain. Locked out everywhere, forever. Revoking is math, not a support ticket.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- feature grid -->
+  <div style="max-width:1160px;margin:0 auto;padding:56px 24px 8px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px">
+      <div style="background:var(--card);border:1px solid var(--line);padding:24px" style-hover="border-color:var(--ink)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2" stroke-linecap="square" style="margin-bottom:14px"><circle cx="12" cy="12" r="9" stroke-dasharray="3 2.6"></circle><circle cx="12" cy="9.6" r="2.6"></circle><path d="M7.4 17.2c.9-2.1 2.6-3.2 4.6-3.2s3.7 1.1 4.6 3.2"></path></svg>
+        <div style="font-weight:700;font-size:15.5px;margin-bottom:6px">Private by design</div>
+        <p style="margin:0;font-size:13.5px;line-height:1.6;color:var(--mut)">The agent never learns who you are. It works for a pseudonym, cryptographically yours.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);padding:24px" style-hover="border-color:var(--ink)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2" stroke-linecap="square" style="margin-bottom:14px"><circle cx="12" cy="12" r="9"></circle><path d="M5.8 5.8l12.4 12.4"></path></svg>
+        <div style="font-weight:700;font-size:15.5px;margin-bottom:6px">Blocked before it happens</div>
+        <p style="margin:0;font-size:13.5px;line-height:1.6;color:var(--mut)">Limits are enforced by cryptography, not promises. Over-cap actions can't even be proven — so they can't happen.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);padding:24px" style-hover="border-color:var(--ink)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2" stroke-linecap="square" style="margin-bottom:14px"><path d="M6.5 3.5h11v17l-2.75-2-2.75 2-2.75-2-2.75 2z"></path><path d="M9.5 8.5h5M9.5 12h5"></path></svg>
+        <div style="font-weight:700;font-size:15.5px;margin-bottom:6px">Receipts, not reviews</div>
+        <p style="margin:0;font-size:13.5px;line-height:1.6;color:var(--mut)">Every task posts a verifiable public receipt. An agent's track record is math you can check.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);padding:24px" style-hover="border-color:var(--ink)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2" stroke-linecap="square" style="margin-bottom:14px"><rect x="5" y="11" width="14" height="9"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4" stroke-dasharray="3 2.4"></path></svg>
+        <div style="font-weight:700;font-size:15.5px;margin-bottom:6px">One tap to fire</div>
+        <p style="margin:0;font-size:13.5px;line-height:1.6;color:var(--mut)">Revoked on-chain, locked out everywhere, forever. No password resets, no cleanup.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- privacy explainer -->
+  <div style="max-width:1160px;margin:0 auto;padding:64px 24px 8px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">Privacy, legible</div>
+    <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:38px;letter-spacing:-.01em;margin:0 0 10px">What the rest of the world sees</h2>
+    <p style="margin:0 0 26px;font-size:15px;color:var(--mut);max-width:60ch">Receipts are public so anyone can verify an agent's record. You are not in them.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px">
+      <div style="background:var(--card);border:1px solid var(--ink);padding:24px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--grn);margin-bottom:16px;border-bottom:1px dashed var(--line);padding-bottom:10px">On the public ledger</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-family:'IBM Plex Mono',monospace;font-size:12.5px">
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--mut)">task</span><span>subscribe · $9.49</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--mut)">agent</span><span>agent:mn1_7c…e2</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--mut)">holder</span><span>holder:zk_a4…91</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--mut)">proof</span><span style="color:var(--grn)">π valid ✓</span></div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);padding:24px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:16px;border-bottom:1px dashed var(--line);padding-bottom:10px">Deliberately absent</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:14px;color:var(--mut)">
+          <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square"><path d="M18 6 6 18M6 6l12 12"></path></svg>who you are</div>
+          <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square"><path d="M18 6 6 18M6 6l12 12"></path></svg>your spending caps</div>
+          <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square"><path d="M18 6 6 18M6 6l12 12"></path></svg>what else you allowed</div>
+          <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square"><path d="M18 6 6 18M6 6l12 12"></path></svg>when your credentials expire</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- roadmap -->
+  <div style="max-width:1160px;margin:0 auto;padding:64px 24px 8px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">Roadmap</div>
+    <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:38px;letter-spacing:-.01em;margin:0 0 26px">Where this goes</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px">
+      <div style="background:var(--card);border:1px solid var(--line);padding:24px">
+        <div style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);border:1px solid var(--blue);padding:4px 11px;margin-bottom:16px">Soon</div>
+        <ul style="margin:0;padding:0 0 0 18px;font-size:14.5px;line-height:1.9;color:var(--mut)">
+          <li>Agent-to-agent delegation with narrower caps</li>
+          <li>Shared household credentials</li>
+          <li>Spending analytics across agents</li>
+        </ul>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);padding:24px">
+        <div style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);border:1px solid var(--line);padding:4px 11px;margin-bottom:16px">Later</div>
+        <ul style="margin:0;padding:0 0 0 18px;font-size:14.5px;line-height:1.9;color:var(--mut)">
+          <li>Open agent publishing with staked reputations</li>
+          <li>Credentials for real-world services</li>
+          <li>Programmable allowance schedules</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- closing CTA + footer -->
+  <div style="max-width:1160px;margin:0 auto;padding:72px 24px 48px;text-align:center">
+    <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:clamp(32px,4vw,50px);letter-spacing:-.01em;margin:0 0 24px">Delegation <em style="color:var(--blue)">without</em> surrender.</h2>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <button onClick="{{ seeItWork }}" style="background:var(--blue);color:#fff;border:none;padding:15px 26px;font-weight:600;font-size:15.5px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)">See it work</button>
+      <button onClick="{{ goDirectory }}" style="background:var(--card);border:1px solid var(--ink);padding:15px 26px;font-weight:600;font-size:15.5px;cursor:pointer;transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)">Browse agents</button>
+    </div>
+  </div>
+  <div style="border-top:1px solid var(--ink);background:var(--card)">
+    <div style="max-width:1160px;margin:0 auto;padding:22px 24px;display:flex;gap:8px 22px;flex-wrap:wrap;align-items:baseline;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mut)">
+      <span style="display:inline-flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true" style="transform:translateY(1px)"><circle cx="16" cy="16" r="14.5" style="fill:none;stroke:#201D16;stroke-width:1.6;stroke-dasharray:3.2 3;transform-origin:16px 16px;animation:spinSlow 24s linear infinite"></circle><circle cx="16" cy="16" r="10" style="fill:#201D16"></circle><path d="M11.6 16.4l3 3 5.8-6.6" style="fill:none;stroke:#F3EFE6;stroke-width:2.4"></path></svg><span style="font-family:'Instrument Serif',Georgia,serif;font-size:19px;color:var(--ink)">Grant</span></span>
+      <span>open source · Apache-2.0</span>
+      <a href="#" onClick="{{ noop }}">GitHub</a>
+      <span style="flex:1"></span>
+      <span>Built on Midnight · Midnight Buildathon 2026</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ DIRECTORY ============ -->
+<sc-if value="{{ isDirectory }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1160px;margin:0 auto;padding:44px 24px 72px;animation:fadeIn .35s">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">Directory</div>
+  <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:44px;letter-spacing:-.01em;margin:0 0 8px">Agents for hire</h1>
+  <p style="margin:0 0 26px;font-size:15px;color:var(--mut)">Every agent works on a leash you set. Records below are receipts, not reviews.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:26px">
+    <sc-for list="{{ cats }}" as="c" hint-placeholder-count="5">
+      <button onClick="{{ c.select }}" style="background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bd }};padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer" style-hover="border-color:var(--ink)">{{ c.name }}</button>
+    </sc-for>
+    <span style="flex:1"></span>
+    <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Search agents" aria-label="Search agents" style="background:var(--card);border:1px solid var(--line);padding:10px 14px;font-size:14px;font-family:inherit;min-width:200px;color:var(--ink)">
+  </div>
+  <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;padding:64px 24px;color:var(--mut);border:1px dashed var(--line);background:var(--card)">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:var(--ink);margin-bottom:6px">No agents match</div>
+      <div style="font-size:14px">Try another word, or clear the filter.</div>
+    </div>
+  </sc-if>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px">
+    <sc-for list="{{ list }}" as="a" hint-placeholder-count="6">
+      <button onClick="{{ a.open }}" style="text-align:left;background:var(--card);border:1px solid var(--line);padding:22px;cursor:pointer;display:flex;flex-direction:column;gap:13px;transition:box-shadow .15s,transform .15s,border-color .15s" style-hover="border-color:var(--ink);box-shadow:6px 6px 0 rgba(32,29,22,.16);transform:translate(-2px,-2px)">
+        <div style="display:flex;align-items:center;gap:13px">
+          <span style="width:46px;height:46px;background:{{ a.tint }};border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:23px">{{ a.emoji }}</span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px">{{ a.name }}</span>
+            <sc-if value="{{ a.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:{{ a.badgeFg }};border:1px solid {{ a.badgeFg }};padding:2px 7px">{{ a.badge }}</span></sc-if></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut)">{{ a.cat }} · by {{ a.pub }}</div>
+          </div>
+        </div>
+        <p style="margin:0;font-size:14px;line-height:1.55">{{ a.line }}</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ a.chips }}" as="p" hint-placeholder-count="2">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.03em;color:var(--blue);background:var(--bluetint);padding:4px 10px">{{ p }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut);border-top:1px dashed var(--line);padding-top:12px;margin-top:2px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="2.2" stroke-linecap="square"><path d="M12 3l7 3v5c0 4.6-3 7.7-7 9.2C8 18.7 5 15.6 5 11V6z"></path><path d="M9.5 12l1.8 1.8L15 10"></path></svg>
+          {{ a.tasksFmt }} receipts · all verifiable
+        </div>
+      </button>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ AGENT DETAIL ============ -->
+<sc-if value="{{ isAgent }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:980px;margin:0 auto;padding:36px 24px 72px;animation:fadeIn .35s">
+  <button onClick="{{ goDirectory }}" style="background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);padding:6px 0;display:flex;align-items:center;gap:7px;margin-bottom:22px" style-hover="color:var(--blue)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 18l-6-6 6-6"></path></svg>All agents
+  </button>
+  <div style="background:var(--card);border:1px solid var(--ink);padding:30px;display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-bottom:16px;box-shadow:6px 6px 0 rgba(32,29,22,.12)">
+    <span style="width:70px;height:70px;background:{{ agent.tint }};border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:35px">{{ agent.emoji }}</span>
+    <div style="flex:1;min-width:220px">
+      <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:38px;letter-spacing:-.01em;margin:0 0 4px">{{ agent.name }}</h1>
+      <div style="font-size:14.5px;color:var(--mut)">{{ agent.line }}</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut)">
+        <span>{{ agent.cat }}</span><span>by {{ agent.pub }}</span><span>publishing since {{ agent.since }}</span>
+      </div>
+    </div>
+    <sc-if value="{{ agent.hiredLabel }}" hint-placeholder-val="{{ false }}">
+      <span style="display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grn);border:1px solid var(--grn);padding:13px 18px">{{ agent.hiredLabel }}</span>
+    </sc-if>
+    <sc-if value="{{ agent.canHire }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ agent.hire }}" style="background:var(--blue);color:#fff;border:none;padding:15px 30px;font-weight:600;font-size:15.5px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)">Hire {{ agent.name }}</button>
+    </sc-if>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:16px">
+    <div style="background:var(--card);border:1px solid var(--line);padding:26px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:0 0 16px;border-bottom:1px dashed var(--line);padding-bottom:10px">What it does</h2>
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <sc-for list="{{ agent.exampleList }}" as="e" hint-placeholder-count="3">
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.55">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:4px"><path d="M20 6 9 17l-5-5"></path></svg>{{ e }}
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);padding:26px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:0 0 16px;border-bottom:1px dashed var(--line);padding-bottom:10px">Track record</h2>
+      <div style="display:flex;gap:26px;margin-bottom:16px">
+        <div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1.1">{{ agent.tasksFmt }}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mut)">tasks completed</div></div>
+        <div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1.1;color:var(--grn)">100%</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mut)">receipts verifiable</div></div>
+        <div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1.1">0</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mut)">blocked attempts</div></div>
+      </div>
+      <div style="background:var(--paper);border:1px dashed var(--line);padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mut);line-height:1.7">latest {{ agent.rcptSample }}<br>proof <span style="color:var(--grn)">π valid ✓</span> · on the public ledger</div>
+      <p style="margin:12px 0 0;font-size:12.5px;color:var(--mut);line-height:1.55">Ratings here are backed by receipts anyone can verify — not reviews anyone can write.</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+    <div style="background:var(--card);border:1px solid var(--line);padding:26px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin:0 0 16px;border-bottom:1px dashed var(--line);padding-bottom:10px">What it asks for</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ agent.perms }}" as="p" hint-placeholder-count="3">
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.55"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:4px"><path d="M20 6 9 17l-5-5"></path></svg>{{ p }}</div>
+        </sc-for>
+      </div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mut);display:flex;gap:18px;flex-wrap:wrap">
+        <span>default cap <strong style="color:var(--ink)">{{ agent.capFmt }}</strong></span>
+        <span>expires in <strong style="color:var(--ink)">{{ agent.days }} days</strong></span>
+      </div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);padding:26px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin:0 0 16px;border-bottom:1px dashed var(--line);padding-bottom:10px">What it can never do</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ agent.nevers }}" as="n" hint-placeholder-count="3">
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.55;color:var(--mut)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:4px"><path d="M18 6 6 18M6 6l12 12"></path></svg>{{ n }}</div>
+        </sc-for>
+      </div>
+      <p style="margin:18px 0 0;font-size:12.5px;color:var(--mut);line-height:1.55;border-top:1px dashed var(--line);padding-top:14px">"Never" is enforced at proof time — an action outside these limits cannot produce a valid proof, so it cannot execute.</p>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ DASHBOARD ============ -->
+<sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1160px;margin:0 auto;padding:44px 24px 72px;animation:fadeIn .35s">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">Dashboard</div>
+  <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:44px;letter-spacing:-.01em;margin:0 0 8px">Working for you</h1>
+  <p style="margin:0 0 30px;font-size:15px;color:var(--mut)">Each agent runs on its own credential — capped, expiring, and revocable in one tap.</p>
+  <sc-if value="{{ dashEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;padding:76px 24px;background:var(--card);border:1px dashed var(--ink)">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;margin-bottom:10px">Nobody's working for you yet</div>
+      <p style="margin:0 auto 24px;font-size:14.5px;color:var(--mut);max-width:44ch;line-height:1.6">Hire your first agent. It gets a permission, not a password — and you can fire it any time.</p>
+      <button onClick="{{ goDirectory }}" style="background:var(--blue);color:#fff;border:none;padding:14px 24px;font-weight:600;font-size:15px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)">Browse agents</button>
+    </div>
+  </sc-if>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:16px;margin-bottom:40px">
+    <sc-for list="{{ hiredCards }}" as="h" hint-placeholder-count="1">
+      <div style="background:var(--card);border:1px solid {{ h.borderCol }};padding:24px;position:relative;opacity:{{ h.cardOpacity }}">
+        <sc-if value="{{ h.revoked }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:14px;left:52px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--red);border:1.5px solid var(--red);padding:3px 9px;background:var(--card);z-index:1;animation:stampIn .4s both">REVOKED</div>
+        </sc-if>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">
+          <span style="width:48px;height:48px;background:{{ h.tint }};border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:24px;filter:{{ h.avatarFilter }}">{{ h.emoji }}</span>
+          <div style="flex:1">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px">{{ h.name }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mut)">{{ h.statusLine }}</div>
+          </div>
+          <div style="position:relative;width:64px;height:64px;flex:none">
+            <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+              <circle cx="32" cy="32" r="28" style="fill:none;stroke:#E7E1D2;stroke-width:6"></circle>
+              <circle cx="32" cy="32" r="28" transform="rotate(-90 32 32)" style="fill:none;stroke:{{ h.ringColor }};stroke-width:6;stroke-linecap:butt;stroke-dasharray:176;stroke-dashoffset:{{ h.ringOff }};transition:stroke-dashoffset .6s"></circle>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11.5px">{{ h.pct }}%</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--mut);margin-bottom:14px;border-bottom:1px dashed var(--line);padding-bottom:12px">
+          <span><strong style="color:var(--ink)">{{ h.spentFmt }}</strong> of {{ h.capFmt }} cap</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ h.cred }}</span>
+        </div>
+        <sc-if value="{{ h.blocked }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--redtint);border:1px solid var(--red);padding:16px;margin-bottom:14px;animation:sheetUp .3s">
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.2" stroke-linecap="square" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M5.8 5.8l12.4 12.4"></path></svg>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:14px;color:var(--red);margin-bottom:4px">Blocked before it happened</div>
+                <p style="margin:0 0 8px;font-size:13px;line-height:1.55">{{ h.name }} tried to spend <strong>{{ h.blocked.amt }}</strong> — over your {{ h.capFmt }} cap. No valid proof can exist for it, so it never executed. Nothing to undo.</p>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mut)">proof π rejected · cap exceeded · 0 spent</div>
+              </div>
+              <button onClick="{{ h.dismissBlocked }}" aria-label="Dismiss" style="background:none;border:none;cursor:pointer;color:var(--mut);padding:2px" style-hover="color:var(--ink)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ h.revoked }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--paper);border:1px dashed var(--line);padding:14px;font-size:13px;color:var(--mut);line-height:1.55;display:flex;gap:10px;align-items:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" style="flex:none"><rect x="5" y="11" width="14" height="9" rx="1"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            <span>Fired {{ h.revokedAt }} — credential revoked on-chain. Locked out everywhere, forever.</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ h.active }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ h.run }}" style="flex:1;min-width:104px;background:var(--blue);color:#fff;border:none;padding:11px 12px;font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;box-shadow:3px 3px 0 var(--ink);transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)">
+              <sc-if value="{{ h.busy }}" hint-placeholder-val="{{ false }}"><span style="width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite"></span></sc-if>
+              {{ h.runLabel }}
+            </button>
+            <button onClick="{{ h.test }}" style="flex:1;min-width:104px;background:var(--card);border:1px solid var(--ink);padding:11px 12px;font-weight:600;font-size:13.5px;cursor:pointer;transition:box-shadow .15s,transform .15s" style-hover="box-shadow:3px 3px 0 var(--ink);transform:translate(-1px,-1px)">Test the limits</button>
+            <button onClick="{{ h.fire }}" style="background:var(--card);border:1px solid var(--red);color:var(--red);padding:11px 15px;font-weight:600;font-size:13.5px;cursor:pointer;transition:box-shadow .15s,transform .15s" style-hover="box-shadow:3px 3px 0 var(--red);transform:translate(-1px,-1px)">Fire</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ hasReceipts }}" hint-placeholder-val="{{ false }}">
+    <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;letter-spacing:-.01em;margin:0 0 4px">Receipts</h2>
+    <p style="margin:0 0 16px;font-size:13.5px;color:var(--mut)">Public, verifiable, and pseudonymous. Tap one to see exactly what the world can read.</p>
+    <div style="display:flex;flex-direction:column;gap:0;border:1px solid var(--line);background:var(--card)">
+      <sc-for list="{{ receiptRows }}" as="r" hint-placeholder-count="2">
+        <button onClick="{{ r.open }}" style="text-align:left;background:none;border:none;border-bottom:1px dashed var(--line);padding:14px 18px;cursor:pointer;display:flex;gap:14px;align-items:center;animation:sheetUp .3s" style-hover="background:var(--bluetint)">
+          <span style="width:34px;height:34px;background:{{ r.tint }};border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none">{{ r.emoji }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.task }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mut)">{{ r.id }} · {{ r.time }}</div>
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:14px;flex:none">{{ r.amtFmt }}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="2.2" stroke-linecap="square" style="flex:none"><path d="M12 3l7 3v5c0 4.6-3 7.7-7 9.2C8 18.7 5 15.6 5 11V6z"></path><path d="M9.5 12l1.8 1.8L15 10"></path></svg>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ============ RECEIPT DETAIL ============ -->
+<sc-if value="{{ isReceipt }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:840px;margin:0 auto;padding:36px 24px 72px;animation:fadeIn .35s">
+  <button onClick="{{ goDashboard }}" style="background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);padding:6px 0;display:flex;align-items:center;gap:7px;margin-bottom:22px" style-hover="color:var(--blue)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 18l-6-6 6-6"></path></svg>Back to dashboard
+  </button>
+  <sc-if value="{{ receipt }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--card);border:1px solid var(--ink);margin-bottom:16px;box-shadow:8px 8px 0 rgba(32,29,22,.12)">
+      <div style="padding:14px 28px;border-bottom:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Public receipt</span><span>{{ receipt.id }}</span></div>
+      <div style="padding:24px 28px;border-bottom:1px dashed var(--line);display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <span style="width:44px;height:44px;background:{{ receipt.tint }};border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:22px">{{ receipt.emoji }}</span>
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:26px">{{ receipt.task }}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut)">posted {{ receipt.time }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--grn);border:1.5px solid var(--grn);padding:7px 13px;transform:rotate(-3deg)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M20 6 9 17l-5-5"></path></svg>proof verified
+        </span>
+      </div>
+      <div style="padding:24px 28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:30px">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--grn);margin-bottom:16px">What this receipt contains</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px">
+            <div><div style="font-family:'IBM Plex Mono',monospace;color:var(--mut);font-size:10.5px;margin-bottom:2px">task</div><div style="font-weight:600">{{ receipt.task }}</div></div>
+            <div><div style="font-family:'IBM Plex Mono',monospace;color:var(--mut);font-size:10.5px;margin-bottom:2px">amount</div><div style="font-weight:600">{{ receipt.amtFmt }}</div></div>
+            <div><div style="font-family:'IBM Plex Mono',monospace;color:var(--mut);font-size:10.5px;margin-bottom:2px">agent (pseudonymous)</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ receipt.agentPseud }}</div></div>
+            <div><div style="font-family:'IBM Plex Mono',monospace;color:var(--mut);font-size:10.5px;margin-bottom:2px">credential holder (pseudonymous)</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ receipt.holder }}</div></div>
+            <div><div style="font-family:'IBM Plex Mono',monospace;color:var(--mut);font-size:10.5px;margin-bottom:2px">proof</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--grn)">{{ receipt.proof }} ✓</div></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:16px">What it deliberately omits</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px;color:var(--mut)">
+            <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square" style="flex:none"><path d="M18 6 6 18M6 6l12 12"></path></svg>who you are — name, email, wallet, anything</div>
+            <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square" style="flex:none"><path d="M18 6 6 18M6 6l12 12"></path></svg>your spending cap</div>
+            <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square" style="flex:none"><path d="M18 6 6 18M6 6l12 12"></path></svg>what else the agent may do</div>
+            <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square" style="flex:none"><path d="M18 6 6 18M6 6l12 12"></path></svg>when the credential expires</div>
+            <div style="display:flex;gap:9px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C6402C" stroke-width="2.4" stroke-linecap="square" style="flex:none"><path d="M18 6 6 18M6 6l12 12"></path></svg>your other agents or receipts</div>
+          </div>
+          <p style="margin:16px 0 0;font-size:12.5px;line-height:1.65;color:var(--mut);background:var(--paper);border:1px dashed var(--line);padding:12px 14px">The proof shows the task was <em>within limits</em> without revealing the limits. That's the zero-knowledge part.</p>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--mut)">Secured by zero-knowledge proofs on Midnight</div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ============ ONBOARDING ============ -->
+<sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:500px;margin:0 auto;padding:60px 24px 72px;animation:fadeIn .35s">
+  <div style="background:var(--card);border:1px solid var(--ink);padding:34px 32px;box-shadow:8px 8px 0 rgba(32,29,22,.12)">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:14px">Step one of one</div>
+    <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;letter-spacing:-.01em;margin:0 0 10px">Bring your own keys</h1>
+    <p style="margin:0 0 24px;font-size:14.5px;line-height:1.6;color:var(--mut)">Grant never holds your money or your identity. Your wallet signs the permissions; agents only ever see the credential. Works with any Midnight wallet.</p>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:22px">
+      <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+        <button onClick="{{ w.connect }}" style="display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);padding:14px 16px;cursor:pointer;text-align:left;transition:box-shadow .15s,transform .15s,border-color .15s" style-hover="border-color:var(--ink);box-shadow:4px 4px 0 rgba(32,29,22,.15);transform:translate(-1px,-1px)">
+          <span style="width:38px;height:38px;background:{{ w.tint }};border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-family:'Instrument Serif',Georgia,serif;font-size:19px;color:{{ w.fg }}">{{ w.initial }}</span>
+          <span style="flex:1"><span style="display:block;font-weight:700;font-size:15px">{{ w.name }}</span><span style="display:block;font-size:12.5px;color:var(--mut)">{{ w.desc }}</span></span>
+          <sc-if value="{{ w.connecting }}" hint-placeholder-val="{{ false }}"><span style="width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--blue);border-radius:50%;display:inline-block;animation:spin .7s linear infinite"></span></sc-if>
+          <sc-if value="{{ w.idle }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" style="color:var(--mut)"><path d="M9 6l6 6-6 6"></path></svg></sc-if>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;color:var(--mut);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em"><span style="flex:1;height:1px;background:var(--line)"></span>OR<span style="flex:1;height:1px;background:var(--line)"></span></div>
+    <button onClick="{{ tryDemo }}" style="width:100%;background:var(--paper);border:1px dashed var(--ink);padding:14px;font-weight:600;font-size:14.5px;cursor:pointer;transition:box-shadow .15s,transform .15s" style-hover="box-shadow:3px 3px 0 var(--ink);transform:translate(-1px,-1px)">Try the demo without a wallet</button>
+    <p style="margin:16px 0 0;font-size:12px;color:var(--mut);text-align:center;line-height:1.55">No wallet yet? The demo works fully — you just can't take credentials with you.</p>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ PERMISSION SHEET ============ -->
+<sc-if value="{{ sheet }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:60;background:rgba(32,29,22,.45);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .25s" onClick="{{ sheetBackdrop }}">
+  <div role="dialog" aria-modal="true" aria-label="Permission request" style="width:min(450px,100%);background:var(--card);border:1px solid var(--ink);border-bottom:none;padding:0 0 34px;animation:sheetUp .32s cubic-bezier(.32,.9,.35,1);box-shadow:0 -16px 50px rgba(32,29,22,.3)" onClick="{{ stop }}">
+    <div style="border-bottom:1px dashed var(--line);padding:12px 26px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);display:flex;justify-content:space-between"><span>Permission request</span><span>{{ sheetNo }}</span></div>
+    <sc-if value="{{ proving }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:44px 26px 26px">
+        <div style="position:relative;width:74px;height:74px;margin:0 auto 22px">
+          <span style="position:absolute;inset:0;border:2.5px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin 1.1s linear infinite"></span>
+          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px">{{ sheet.emoji }}</span>
+        </div>
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;margin-bottom:8px">Issuing private credential…</div>
+        <p style="margin:0 auto;font-size:13.5px;color:var(--mut);max-width:36ch;line-height:1.6;animation:pulse 2s ease-in-out infinite">Generating a zero-knowledge proof. {{ sheet.name }} will get a leash — never your keys.</p>
+        <div style="margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--mut);opacity:.7">midnight · zk-snark · ~2s</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notProving }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:24px 26px 0">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px">
+        <span style="width:48px;height:48px;background:{{ sheet.tint }};border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:24px">{{ sheet.emoji }}</span>
+        <div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px">{{ sheet.name }} wants to:</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mut)">from {{ sheet.pub }} · you can change your mind any time</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+        <sc-for list="{{ sheet.perms }}" as="p" hint-placeholder-count="2">
+          <div style="display:flex;gap:11px;align-items:flex-start;font-size:14.5px;line-height:1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:3px"><path d="M20 6 9 17l-5-5"></path></svg>{{ p }}</div>
+        </sc-for>
+        <div style="display:flex;gap:11px;align-items:center;font-size:14.5px;flex-wrap:wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2.6" stroke-linecap="square" style="flex:none"><path d="M20 6 9 17l-5-5"></path></svg>
+          <span>spend up to</span>
+          <span style="display:inline-flex;align-items:center;gap:2px;background:var(--paper);border:1px solid var(--line);padding:2px">
+            <button onClick="{{ capDown }}" aria-label="Lower cap" style="width:28px;height:28px;border:none;background:none;cursor:pointer;font-size:16px;font-weight:700;color:var(--blue)" style-hover="background:var(--bluetint)">−</button>
+            <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:14.5px;min-width:48px;text-align:center">{{ sheetCapFmt }}</span>
+            <button onClick="{{ capUp }}" aria-label="Raise cap" style="width:28px;height:28px;border:none;background:none;cursor:pointer;font-size:16px;font-weight:700;color:var(--blue)" style-hover="background:var(--bluetint)">+</button>
+          </span>
+          <span style="font-size:12px;color:var(--mut)">you can lower this</span>
+        </div>
+        <div style="display:flex;gap:11px;align-items:flex-start;font-size:14.5px;line-height:1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2440D4" stroke-width="2.6" stroke-linecap="square" style="flex:none;margin-top:3px"><path d="M20 6 9 17l-5-5"></path></svg><span>for <strong>{{ sheet.days }} days</strong>, unless you fire it first</span></div>
+      </div>
+      <div style="background:var(--paper);border:1px dashed var(--line);padding:11px 14px;font-size:12.5px;color:var(--mut);line-height:1.55;margin-bottom:20px;display:flex;gap:9px;align-items:center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" style="flex:none"><path d="M12 3l7 3v5c0 4.6-3 7.7-7 9.2C8 18.7 5 15.6 5 11V6z"></path></svg>
+        <span>{{ sheet.name }} never learns who you are. It works for a pseudonym.</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onClick="{{ deny }}" style="flex:1;background:var(--paper);border:1px solid var(--line);padding:14px;font-weight:600;font-size:15px;cursor:pointer;color:var(--mut)" style-hover="border-color:var(--ink);color:var(--ink)">Don't allow</button>
+        <button onClick="{{ allow }}" style="flex:1;background:var(--blue);border:none;padding:14px;font-weight:600;font-size:15px;cursor:pointer;color:#fff;box-shadow:4px 4px 0 var(--ink);transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)">Allow</button>
+      </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ FIRE CONFIRM ============ -->
+<sc-if value="{{ fireAgent }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:60;background:rgba(32,29,22,.45);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .2s" onClick="{{ cancelFire }}">
+  <div role="dialog" aria-modal="true" aria-label="Fire agent" style="width:min(410px,100%);background:var(--card);border:1px solid var(--ink);padding:30px 28px;animation:sheetUp .28s cubic-bezier(.32,.9,.35,1);box-shadow:8px 8px 0 rgba(32,29,22,.25)" onClick="{{ stop }}">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--red);margin-bottom:14px">Revocation</div>
+    <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:32px;letter-spacing:-.01em;margin:0 0 12px">Fire {{ fireAgent.name }}?</h2>
+    <p style="margin:0 0 6px;font-size:14.5px;line-height:1.6">Its credential is revoked on-chain the moment you tap. Locked out everywhere, instantly, forever.</p>
+    <p style="margin:0 0 24px;font-size:13.5px;line-height:1.6;color:var(--mut)">Revoking is math, not a support ticket. Its receipts stay on the ledger.</p>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ cancelFire }}" style="flex:1;background:var(--paper);border:1px solid var(--line);padding:13px;font-weight:600;font-size:14.5px;cursor:pointer;color:var(--mut)" style-hover="border-color:var(--ink);color:var(--ink)">Keep it</button>
+      <button onClick="{{ confirmFire }}" style="flex:1;background:var(--red);border:none;padding:13px;font-weight:600;font-size:14.5px;cursor:pointer;color:#fff;box-shadow:4px 4px 0 var(--ink);transition:box-shadow .15s,transform .15s" style-hover="transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)">Fire it</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ TOAST ============ -->
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;background:var(--ink);color:#F3EFE6;padding:13px 20px;font-size:13px;font-weight:500;display:flex;gap:10px;align-items:center;box-shadow:6px 6px 0 rgba(32,29,22,.25);animation:toastIn .3s cubic-bezier(.32,.9,.35,1);max-width:min(560px,calc(100vw - 40px))">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8FD3B0" stroke-width="2.6" stroke-linecap="square" style="flex:none"><path d="M20 6 9 17l-5-5"></path></svg>
+  {{ toast }}
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;provingMs&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:2000,&quot;min&quot;:300,&quot;max&quot;:5000,&quot;step&quot;:100,&quot;unit&quot;:&quot;ms&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;prehired&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;startView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;landing&quot;,&quot;directory&quot;,&quot;dashboard&quot;,&quot;onboarding&quot;],&quot;default&quot;:&quot;landing&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demo&quot;}}">
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.cats = ['All', 'Money', 'Home', 'Travel', 'Work'];
+    this.agents = [
+      { id: 'submanager', name: 'SubManager', emoji: '💳', tint: '#E6E9F8', cat: 'Money', pub: 'Loop Labs', since: '2025', line: 'Trims and cancels subscriptions you forgot about.', cap: 30, days: 30, tasks: 1284,
+        perms: ['subscribe & cancel on your behalf'], nevers: ['See your card number', 'Exceed your cap', 'Know who you are', 'Act after day 30'],
+        examples: [{ t: 'Renewed your password manager at the annual rate', amt: 12 }, { t: 'Downgraded cloud storage to 200 GB', amt: 1.99 }, { t: 'Cancelled a fitness app idle for 90 days — $0 spent', amt: 0 }, { t: 'Switched music plan to duo', amt: 9.49 }] },
+      { id: 'farescout', name: 'FareScout', emoji: '✈️', tint: '#F6E3D3', cat: 'Travel', pub: 'Terminal 2', since: '2025', line: 'Watches routes you care about and books when fares dip.', cap: 250, days: 14, tasks: 862,
+        perms: ['book economy fares on your watched routes'], nevers: ['See your passport or name', 'Change or cancel existing trips', 'Book above your cap'],
+        examples: [{ t: 'Booked SFO→SEA at $98 — 31% below the 30-day average', amt: 98 }, { t: 'Held a fare for 24 hours at no cost', amt: 0 }, { t: 'Booked LAX→DEN red-eye', amt: 112 }] },
+      { id: 'pantrypilot', name: 'PantryPilot', emoji: '🥕', tint: '#E2EDE4', cat: 'Home', pub: 'Homerow', since: '2024', line: 'Restocks staples before you run out.', cap: 60, days: 30, tasks: 2310,
+        perms: ['order groceries from your list'], nevers: ['Order anything outside your list', 'See your address — it ships to a locker code', 'Exceed the weekly cap'],
+        examples: [{ t: 'Restocked oat milk, eggs, and coffee', amt: 23.4 }, { t: 'Swapped to store brand — saved $4.10', amt: 11.25 }, { t: 'Paused delivery while you were away', amt: 0 }] },
+      { id: 'inboxzero', name: 'InboxZero', emoji: '📮', tint: '#EFE4EE', cat: 'Work', pub: 'Deskware', since: '2025', line: 'Files expenses and pays the small invoices you approve.', cap: 200, days: 30, tasks: 641,
+        perms: ['pay pre-approved invoices', 'file expense reports'], nevers: ['Read email outside its label', 'Pay anyone not on your list', 'Sign anything'],
+        examples: [{ t: 'Paid the office-plants invoice', amt: 45 }, { t: 'Filed three receipts from Tuesday', amt: 0 }, { t: 'Paid the domain renewal', amt: 18 }] },
+      { id: 'billshield', name: 'BillShield', emoji: '🛡️', tint: '#DDE8E3', cat: 'Money', pub: 'Loop Labs', since: '2024', line: 'Negotiates your bills down and locks in the win.', cap: 25, days: 60, tasks: 1993,
+        perms: ['contact providers as your delegate', 'accept offers that lower a bill'], nevers: ['Accept a worse rate', 'Reveal your identity — it negotiates pseudonymously', 'Touch bills you did not list'],
+        examples: [{ t: 'Cut the internet bill from $65 to $45/mo', amt: 0 }, { t: 'Paid a $10 switch fee, saving $240/yr', amt: 10 }, { t: 'Removed a $7.99 modem-rental charge', amt: 0 }] },
+      { id: 'wattson', name: 'Wattson', emoji: '⚡', tint: '#F7ECCF', cat: 'Home', pub: 'Homerow', since: '2025', line: 'Shifts your energy use to the cheapest hours.', cap: 40, days: 30, tasks: 3120,
+        perms: ['prepay power at off-peak rates'], nevers: ['Turn off the fridge', 'Buy at peak rates', 'See which devices are yours'],
+        examples: [{ t: 'Prepaid 32 kWh at the off-peak rate', amt: 4.8 }, { t: 'Shifted EV charging to 2 am', amt: 0 }, { t: 'Prepaid tomorrow’s heat-pump window', amt: 6.2 }] }
+    ];
+    this.state = { view: 'landing', cat: 'All', q: '', agentId: null, sheetId: null, cap: 0, proving: false, hired: {}, receipts: [], receiptId: null, toast: null, fireId: null, wallet: null, connecting: null, sheetCount: 1 };
+    this._timers = {};
+  }
+  componentDidMount() {
+    this._esc = (e) => { if (e.key === 'Escape') { if (this.state.sheetId && !this.state.proving) this.setState({ sheetId: null }); if (this.state.fireId) this.setState({ fireId: null }); } };
+    document.addEventListener('keydown', this._esc);
+    if (this.props.startView && this.props.startView !== 'landing') this.setState({ view: this.props.startView });
+    if (this.props.prehired) this.prehire();
+  }
+  componentWillUnmount() { document.removeEventListener('keydown', this._esc); Object.values(this._timers).forEach(clearTimeout); }
+  prehire() {
+    const a = this.find('submanager');
+    const hired = { submanager: { spent: 13.99, cap: 30, days: 30, revoked: false, busy: false, blocked: null, cred: this.rid('cred'), taskIx: 2 } };
+    const receipts = [
+      { id: this.rid('rcpt'), agentId: 'submanager', task: a.examples[1].t, amt: a.examples[1].amt, at: Date.now() - 3600e3, proof: this.rid('π'), agentPseud: 'agent:mn1_' + this.rid('').slice(1), holder: 'holder:zk_' + this.rid('').slice(1) },
+      { id: this.rid('rcpt'), agentId: 'submanager', task: a.examples[0].t, amt: a.examples[0].amt, at: Date.now() - 7200e3, proof: this.rid('π'), agentPseud: 'agent:mn1_' + this.rid('').slice(1), holder: 'holder:zk_' + this.rid('').slice(1) }
+    ];
+    this.setState({ hired, receipts });
+  }
+  ms() { return this.props.provingMs ?? 2000; }
+  find(id) { return this.agents.find((a) => a.id === id); }
+  rid(pre) { return pre + '_' + Math.random().toString(36).slice(2, 8); }
+  fmt(n) { return '$' + (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0 }); }
+  showToast(t) { clearTimeout(this._timers.toast); this.setState({ toast: t }); this._timers.toast = setTimeout(() => this.setState({ toast: null }), 3600); }
+  go(view, extra) { this.setState(Object.assign({ view }, extra || {})); window.scrollTo(0, 0); }
+  patch(id, ch) { this.setState((s) => { const h = Object.assign({}, s.hired); h[id] = Object.assign({}, h[id], ch); return { hired: h }; }); }
+  openSheet(id) { const a = this.find(id); this.setState((s) => ({ sheetId: id, cap: a.cap, proving: false, sheetCount: s.sheetCount + 1 })); }
+  allowSheet() {
+    const id = this.state.sheetId, a = this.find(id), cap = this.state.cap;
+    this.setState({ proving: true });
+    this._timers.prove = setTimeout(() => {
+      this.setState((s) => { const h = Object.assign({}, s.hired); h[id] = { spent: 0, cap, days: a.days, revoked: false, busy: false, blocked: null, cred: this.rid('cred'), taskIx: 0 }; return { hired: h, sheetId: null, proving: false, view: 'dashboard' }; });
+      window.scrollTo(0, 0);
+      this.showToast(a.name + ' is working for you. Credential issued — private, capped, revocable.');
+    }, this.ms());
+  }
+  runTask(id) {
+    const a = this.find(id), h = this.state.hired[id];
+    if (!h || h.busy || h.revoked) return;
+    const remaining = h.cap - h.spent;
+    if (remaining <= 0.5) { this.showToast('Cap reached. ' + a.name + ' can’t spend more until you raise it.'); return; }
+    this.patch(id, { busy: true });
+    this._timers['run' + id] = setTimeout(() => {
+      const ex = a.examples[h.taskIx % a.examples.length];
+      const amt = Math.min(ex.amt, remaining);
+      const r = { id: this.rid('rcpt'), agentId: id, task: ex.t, amt, at: Date.now(), proof: this.rid('π'), agentPseud: 'agent:mn1_' + this.rid('').slice(1), holder: 'holder:zk_' + this.rid('').slice(1) };
+      this.setState((s) => { const hh = Object.assign({}, s.hired); hh[id] = Object.assign({}, hh[id], { busy: false, spent: hh[id].spent + amt, taskIx: hh[id].taskIx + 1 }); return { hired: hh, receipts: [r].concat(s.receipts) }; });
+      this.showToast('Done: ' + ex.t + ' · receipt ' + r.id + ' posted.');
+    }, 1300);
+  }
+  testLimits(id) {
+    const h = this.state.hired[id];
+    if (!h || h.busy || h.revoked) return;
+    this.patch(id, { busy: true, blocked: null });
+    this._timers['test' + id] = setTimeout(() => { this.patch(id, { busy: false, blocked: { amt: this.fmt(h.cap + 15) } }); }, 900);
+  }
+  confirmFire() {
+    const id = this.state.fireId, a = this.find(id);
+    this.patch(id, { revoked: true, blocked: null, revokedAt: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) });
+    this.setState({ fireId: null });
+    this.showToast(a.name + ' fired. Credential revoked on-chain — locked out everywhere, forever.');
+  }
+  renderVals() {
+    const s = this.state;
+    const nav = (v, extra) => () => this.go(v, extra);
+    const list = this.agents
+      .filter((a) => (s.cat === 'All' || a.cat === s.cat) && (a.name + ' ' + a.line + ' ' + a.cat).toLowerCase().includes(s.q.toLowerCase()))
+      .map((a) => {
+        const h = s.hired[a.id];
+        return Object.assign({}, a, {
+          tasksFmt: a.tasks.toLocaleString(),
+          chips: a.perms.concat(['up to ' + this.fmt(a.cap), a.days + '-day expiry']),
+          badge: h ? (h.revoked ? 'Fired' : 'Hired') : null,
+          badgeFg: h && h.revoked ? '#C6402C' : '#2F6B4F',
+          open: nav('agent', { agentId: a.id })
+        });
+      });
+    const cats = this.cats.map((c) => ({ name: c, select: () => this.setState({ cat: c }), bg: c === s.cat ? '#201D16' : '#FCFAF4', fg: c === s.cat ? '#F3EFE6' : '#201D16', bd: c === s.cat ? '#201D16' : '#D8D0BF' }));
+    let agent = null;
+    if (s.agentId) {
+      const a = this.find(s.agentId), h = s.hired[a.id];
+      agent = Object.assign({}, a, {
+        tasksFmt: a.tasks.toLocaleString(), capFmt: this.fmt(a.cap),
+        exampleList: a.examples.map((e) => e.t),
+        rcptSample: 'rcpt_k3x9f2 · ' + (a.examples[0].amt ? this.fmt(a.examples[0].amt) : '$0'),
+        canHire: !h || h.revoked ? { yes: true } : null,
+        hiredLabel: h && !h.revoked ? '✓ Working for you' : null,
+        hire: () => this.openSheet(a.id)
+      });
+    }
+    const hiredIds = Object.keys(s.hired);
+    const hiredCards = hiredIds.map((id) => {
+      const a = this.find(id), h = s.hired[id];
+      const pct = Math.min(100, Math.round((h.spent / h.cap) * 100));
+      const C = 176;
+      return {
+        name: a.name, emoji: a.emoji, tint: a.tint, cred: h.cred,
+        revoked: h.revoked, active: !h.revoked, busy: h.busy, blocked: h.blocked,
+        revokedAt: h.revokedAt || '',
+        cardOpacity: h.revoked ? 0.7 : 1,
+        avatarFilter: h.revoked ? 'grayscale(1)' : 'none',
+        borderCol: h.revoked ? '#D8D0BF' : '#201D16',
+        statusLine: h.revoked ? 'credential revoked' : 'expires in ' + h.days + ' days · ' + a.pub,
+        spentFmt: this.fmt(h.spent), capFmt: this.fmt(h.cap), pct,
+        ringColor: h.revoked ? '#C4BCAA' : pct >= 80 ? '#C6402C' : '#2440D4',
+        ringOff: C * (1 - Math.min(1, h.spent / h.cap)),
+        runLabel: h.busy ? 'Working…' : 'Run a task',
+        run: () => this.runTask(id), test: () => this.testLimits(id),
+        fire: () => this.setState({ fireId: id }),
+        dismissBlocked: () => this.patch(id, { blocked: null })
+      };
+    });
+    const receiptRows = s.receipts.map((r) => {
+      const a = this.find(r.agentId);
+      return Object.assign({}, r, { emoji: a.emoji, tint: a.tint, amtFmt: r.amt ? this.fmt(r.amt) : '$0', time: new Date(r.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), open: () => this.go('receipt', { receiptId: r.id }) });
+    });
+    let receipt = null;
+    if (s.receiptId) {
+      const r = s.receipts.find((x) => x.id === s.receiptId);
+      if (r) { const a = this.find(r.agentId); receipt = Object.assign({}, r, { emoji: a.emoji, tint: a.tint, amtFmt: r.amt ? this.fmt(r.amt) : '$0 — no spend', time: new Date(r.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) }); }
+    }
+    const sheetA = s.sheetId ? this.find(s.sheetId) : null;
+    const walletDefs = [
+      { name: 'Lace', desc: 'The most popular Midnight wallet', tint: '#E6E9F8', fg: '#2440D4' },
+      { name: 'Gero', desc: 'Mobile-first, biometric unlock', tint: '#E2EDE4', fg: '#2F6B4F' },
+      { name: '1AM', desc: 'Minimal, keyboard-friendly', tint: '#F6E3D3', fg: '#9A5B22' }
+    ];
+    const wallets = walletDefs.map((w) => ({
+      name: w.name, desc: w.desc, tint: w.tint, fg: w.fg, initial: w.name[0],
+      connecting: s.connecting === w.name, idle: s.connecting !== w.name,
+      connect: () => {
+        if (s.connecting) return;
+        this.setState({ connecting: w.name });
+        this._timers.conn = setTimeout(() => { this.go('directory', { wallet: w.name, connecting: null }); this.showToast(w.name + ' connected. Your keys stay yours — it only signs permissions.'); }, 1100);
+      }
+    }));
+    const activeCount = hiredIds.filter((id) => !s.hired[id].revoked).length;
+    return {
+      isLanding: s.view === 'landing', isDirectory: s.view === 'directory', isAgent: s.view === 'agent',
+      isDashboard: s.view === 'dashboard', isReceipt: s.view === 'receipt', isOnboarding: s.view === 'onboarding',
+      goLanding: nav('landing'), goDirectory: nav('directory'), goDashboard: nav('dashboard'), goOnboarding: nav('onboarding'),
+      seeItWork: nav('agent', { agentId: 'submanager' }),
+      navDirColor: s.view === 'directory' ? '#2440D4' : '#201D16',
+      navDirLine: s.view === 'directory' ? '#2440D4' : 'transparent',
+      navDashColor: s.view === 'dashboard' ? '#2440D4' : '#201D16',
+      navDashLine: s.view === 'dashboard' ? '#2440D4' : 'transparent',
+      hiredCount: activeCount || null,
+      wallet: s.wallet, noWallet: !s.wallet,
+      q: s.q, setQ: (e) => this.setState({ q: e.target.value }),
+      cats, list, noResults: list.length === 0,
+      agent, hiredCards, dashEmpty: hiredIds.length === 0,
+      hasReceipts: s.receipts.length > 0, receiptRows, receipt,
+      sheet: sheetA, proving: s.proving, notProving: !s.proving,
+      sheetNo: '№ ' + String(s.sheetCount).padStart(4, '0'),
+      sheetCapFmt: this.fmt(s.cap),
+      capDown: () => this.setState((st) => ({ cap: Math.max(5, st.cap - 5) })),
+      capUp: () => this.setState((st) => ({ cap: Math.min(sheetA ? sheetA.cap : st.cap, st.cap + 5) })),
+      deny: () => this.setState({ sheetId: null }),
+      allow: () => this.allowSheet(),
+      sheetBackdrop: () => { if (!s.proving) this.setState({ sheetId: null }); },
+      stop: (e) => e.stopPropagation(),
+      fireAgent: s.fireId ? this.find(s.fireId) : null,
+      cancelFire: () => this.setState({ fireId: null }),
+      confirmFire: () => this.confirmFire(),
+      wallets, tryDemo: () => { this.go('directory'); this.showToast('Demo mode — everything works, nothing leaves your browser.'); },
+      toast: s.toast, noop: (e) => e.preventDefault()
+    };
+  }
+}
+</script>
+</body>
+</html>
