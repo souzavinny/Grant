@@ -17,7 +17,10 @@
     "demo": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/scripted-demo.ts",
     "demo:server": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/demo-server.ts",
     "app": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/grant-server.ts",
-    "app:e2e": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/grant-check.ts"
+    "app:e2e": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/grant-check.ts",
+    "faucet": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/grant-faucet.ts",
+    "devnet:up": "docker compose -f ../devnet/devnet.yml up -d",
+    "devnet:down": "docker compose -f ../devnet/devnet.yml down"
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",

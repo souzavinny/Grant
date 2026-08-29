@@ -11,12 +11,42 @@ holds your passwords, cards, or identity — and one tap **fires** it, revoking
 the credential on-chain so it can't prove anything, anywhere, ever again.
 
 ```bash
-cd agentpass-cli && npm run app     # → http://localhost:8791
+cd agentpass-cli && npm run app     # instant demo (no wallet needed) → http://localhost:8791
 ```
 
 The permission prompt is the most rehearsed trust gesture in computing. Grant
 keeps the gesture and upgrades the guarantee: app permissions are promises;
 these are cryptographically enforced, and the grantor stays anonymous.
+
+## Use Grant with your own wallet
+
+Grant is a real Midnight dApp: it connects to **any wallet implementing the
+Midnight DApp connector (API 4.x) — Lace, Gero, or 1AM**. Your wallet
+balances, signs, and submits every transaction; your keys and mandate terms
+never leave your browser.
+
+```bash
+# 1. Local devnet on the fixed ports wallets expect (node 9944 · indexer 8088 · proof server 6300)
+cd agentpass-cli
+npm run devnet:up
+
+# 2. Install a wallet (e.g. Lace from the Chrome Web Store), create a wallet,
+#    then in its settings pick network "Undeployed" and proof server
+#    http://localhost:6300
+
+# 3. Fund your wallet from the devnet genesis supply (fees are paid in your wallet)
+npm run faucet -- <your mn_addr_undeployed1... address>
+
+# 4. Build and serve the dApp, then open it and press "Connect wallet"
+cd ../agentpass-ui
+npm run build && npm run start     # or `npm run dev` while developing
+```
+
+First run deploys your own Grant registry (one wallet approval); after that,
+hiring, tasks, and firing each ask your wallet to sign. Your registry address
+and hired-agent credentials persist in the browser, so refreshes keep your
+state. (`npm run faucet -- --self-test` verifies the whole funding path
+end-to-end without a wallet extension.)
 
 Grant is built on **AgentPass**, the delegation-credential infrastructure in
 this same repo (below) — app and infra ship together.

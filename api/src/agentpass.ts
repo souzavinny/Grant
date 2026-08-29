@@ -54,6 +54,9 @@ export class AgentPassAPI {
     private readonly logger?: Logger,
   ) {
     this.deployedContractAddress = deployedContract.deployTxData.public.contractAddress;
+    // Scope private state to this contract (required by address-scoped providers
+    // such as the browser's in-memory provider; harmless for the level provider).
+    this.providers.privateStateProvider.setContractAddress(this.deployedContractAddress);
   }
 
   readonly deployedContractAddress: ContractAddress;
