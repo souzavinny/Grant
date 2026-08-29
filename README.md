@@ -108,7 +108,7 @@ an observer can and cannot learn, and the Wave 2 unlinkability roadmap — is in
 | [`contract/`](contract) | The **AgentPass Compact contract** (`src/agentpass.compact`), witnesses, simulator, and 15 contract tests |
 | [`api/`](api) | TypeScript API adapting the deployed contract for the two parties (`src/agentpass.ts`) |
 | [`agentpass-cli/`](agentpass-cli) | **Grant** (`npm run app` + `public/grant.html`), the Control Room engineer console (`npm run demo:server`), the interactive CLI tour, and two scripted e2e suites (`npm run demo`, `npm run app:e2e`) |
-| [`agentpass-ui/`](agentpass-ui) | Lace-wallet web UI (template port planned for Wave 2) |
+| [`agentpass-ui/`](agentpass-ui) | **Grant wallet dApp** — connect Lace / Gero / 1AM; your wallet signs every credential (`npm run build && npm run start`) |
 | [`docs/`](docs) | Privacy design document |
 
 The repo started from the official
