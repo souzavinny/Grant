@@ -1,0 +1,130 @@
+// AgentPass — private delegation credentials for AI agents on Midnight.
+// A principal issues a mandate (spend cap, action scope, expiry) to an agent.
+// The agent proves "I am authorized for exactly this action" in zero knowledge:
+// the principal's identity, the agent's identity, and the mandate terms never
+// appear on-chain — only a pseudonymous mandate id, per-action receipts, and
+// cumulative spend are public.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+pragma language_version >= 0.22;
+
+import CompactStandardLibrary;
+
+// Terms of a mandate. Held privately by principal and agent; only a hiding
+// commitment (persistentCommit) of this struct goes on-chain.
+export struct MandateTerms {
+  cap: Uint<64>;
+  expiry: Uint<64>;
+  agentPk: Bytes<32>;
+  scope: Vector<8, Boolean>;
+}
+
+// Public record of one authorized action, keyed by the verifier's requestId.
+export struct AuthReceipt {
+  action: Uint<8>;
+  amount: Uint<64>;
+}
+
+// mandateId -> commitment of MandateTerms
+export ledger mandateCommitments: Map<Bytes<32>, Bytes<32>>;
+// mandateId -> cumulative amount authorized so far
+export ledger spentAmounts: Map<Bytes<32>, Uint<64>>;
+// mandateIds killed by their principal
+export ledger revokedMandates: Set<Bytes<32>>;
+// requestId -> receipt, written once (replay protection + verifier lookup)
+export ledger receipts: Map<Bytes<32>, AuthReceipt>;
+// total successful authorizations across all mandates
+export ledger authorizations: Counter;
+
+// Principal-side secrets
+witness principalSecretKey(): Bytes<32>;
+witness mandateNonce(): Bytes<32>;
+// Shared mandate material (principal creates it; hands terms + salt to the agent off-chain)
+witness mandateTerms(): MandateTerms;
+witness mandateSalt(): Bytes<32>;
+// Agent-side secrets
+witness agentSecretKey(): Bytes<32>;
+// Agent-chosen public time bound (see proveAuthorized step 6)
+witness timeBound(): Uint<64>;
+
+circuit derivePk(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "agentpass:pk:v1"), sk]);
+}
+
+// Pure derivations, exported so the DApp layer can compute the same values the
+// circuits expect (mirrors the official bboard example's publicKey). Both are
+// evaluated locally — calling them never puts the inputs on-chain.
+export circuit agentPublicKey(sk: Bytes<32>): Bytes<32> {
+  return derivePk(sk);
+}
+
+export circuit mandateIdFor(principalPk: Bytes<32>, nonce: Bytes<32>): Bytes<32> {
+  return deriveMandateId(principalPk, nonce);
+}
+
+circuit deriveMandateId(principalPk: Bytes<32>, nonce: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "agentpass:mid:v1"), principalPk, nonce]);
+}
+
+// Principal registers a mandate. On-chain: pseudonymous mandateId and a hiding
+// commitment. The principal's key never leaves the witness.
+export circuit issueMandate(): Bytes<32> {
+  const terms = mandateTerms();
+  const salt = mandateSalt();
+  const mandateId = disclose(deriveMandateId(derivePk(principalSecretKey()), mandateNonce()));
+  assert(!mandateCommitments.member(mandateId), "mandate already exists");
+  mandateCommitments.insert(mandateId, disclose(persistentCommit<MandateTerms>(terms, salt)));
+  spentAmounts.insert(mandateId, 0);
+  return mandateId;
+}
+
+// Agent proves it is authorized for (action, amount) under a live mandate.
+// Public afterwards: mandateId, requestId, action, amount, new spend total.
+// Never public: who the principal is, who the agent is, cap, scope, expiry.
+export circuit proveAuthorized(mandateId: Bytes<32>, requestId: Bytes<32>, action: Uint<8>, amount: Uint<64>): [] {
+  const mid = disclose(mandateId);
+  const rid = disclose(requestId);
+  // 1. Mandate exists and is not revoked
+  assert(mandateCommitments.member(mid), "unknown mandate");
+  assert(!revokedMandates.member(mid), "mandate revoked");
+  // 2. Replay protection: each requestId is authorized at most once
+  assert(!receipts.member(rid), "request already authorized");
+  // 3. Witnessed terms must match the on-chain commitment
+  const terms = mandateTerms();
+  assert(mandateCommitments.lookup(mid) == persistentCommit<MandateTerms>(terms, mandateSalt()), "terms do not match commitment");
+  // 4. Only the delegated agent can produce this proof
+  assert(derivePk(agentSecretKey()) == terms.agentPk, "not the delegated agent");
+  // 5. Action category must be inside the mandate's scope
+  const inScope = (action == 0 && terms.scope[0])
+    || (action == 1 && terms.scope[1])
+    || (action == 2 && terms.scope[2])
+    || (action == 3 && terms.scope[3])
+    || (action == 4 && terms.scope[4])
+    || (action == 5 && terms.scope[5])
+    || (action == 6 && terms.scope[6])
+    || (action == 7 && terms.scope[7]);
+  assert(inScope, "action not in mandate scope");
+  // 6. Not expired. blockTimeLessThan takes a public argument, so instead of
+  //    revealing the mandate's expiry we prove blockTime < bound <= expiry for
+  //    an agent-chosen bound (round it coarsely off-chain to leak less).
+  const bound = timeBound();
+  assert(bound <= terms.expiry, "time bound past expiry");
+  assert(kernel.blockTimeLessThan(disclose(bound)), "mandate expired");
+  // 7. Budget: cumulative spend must stay within the private cap
+  const spent = spentAmounts.lookup(mid);
+  assert(spent + amount <= terms.cap, "would exceed mandate cap");
+  // 8. Record the authorization
+  spentAmounts.insert(mid, disclose((spent + amount) as Uint<64>));
+  receipts.insert(rid, disclose(AuthReceipt { action: action, amount: amount }));
+  authorizations.increment(1);
+}
+
+// Principal kills a mandate. Requires re-deriving the mandateId from the
+// principal's secret key, so only the issuer can revoke.
+export circuit revokeMandate(mandateId: Bytes<32>): [] {
+  const mid = disclose(mandateId);
+  assert(deriveMandateId(derivePk(principalSecretKey()), mandateNonce()) == mid, "not the mandate principal");
+  assert(mandateCommitments.member(mid), "unknown mandate");
+  revokedMandates.insert(mid);
+}

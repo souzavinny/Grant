@@ -247,3 +247,5 @@ export class BBoardAPI implements DeployedBBoardAPI {
 export * as utils from './utils/index.js';
 
 export * from './common-types.js';
+export * from './agentpass-types.js';
+export * from './agentpass.js';

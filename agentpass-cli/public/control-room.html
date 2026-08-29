@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgentPass · Control Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --dawn: #eef2f7;      /* page ground */
+    --ink: #1b2440;       /* deep indigo ink */
+    --veil: #ffffff;      /* cards */
+    --copper: #b4622d;    /* private side */
+    --slate: #44607c;     /* public side */
+    --violet: #5b4fd4;    /* the proof */
+    --ok: #2e7d5b;
+    --danger: #b3403a;
+    --line: #d5dde8;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --disp: "Space Grotesk", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--dawn);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--violet); outline-offset: 2px;
+  }
+
+  /* header */
+  header {
+    display: flex; align-items: baseline; gap: 16px;
+    padding: 18px 28px 14px; border-bottom: 1px solid var(--line);
+  }
+  header h1 { font: 700 22px/1 var(--disp); letter-spacing: -0.02em; }
+  header h1 span { color: var(--violet); }
+  header .tag { font: 500 11px/1 var(--disp); text-transform: uppercase; letter-spacing: 0.14em; color: var(--slate); }
+  header .grow { flex: 1; }
+  .pill {
+    font: 500 12px/1 var(--mono); padding: 6px 10px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--line); color: var(--slate);
+  }
+  .pill b { color: var(--ok); font-weight: 500; }
+  .pill.err b { color: var(--danger); }
+
+  /* the split */
+  main {
+    flex: 1; display: grid; grid-template-columns: 1fr 64px 1fr;
+    min-height: 0; padding: 20px 28px; gap: 0;
+  }
+  .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; overflow-y: auto; }
+  .side-label {
+    font: 500 11px/1 var(--disp); text-transform: uppercase; letter-spacing: 0.18em;
+  }
+  .side.private .side-label { color: var(--copper); }
+  .side.public  .side-label { color: var(--slate); text-align: right; }
+
+  /* the ZK boundary — the one thing proofs cross */
+  .boundary {
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .boundary::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
+    background: repeating-linear-gradient(to bottom, var(--violet) 0 6px, transparent 6px 14px);
+    opacity: 0.55;
+  }
+  .boundary .label {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    font: 500 10px/1 var(--disp); letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--violet); background: var(--dawn); padding: 6px 10px; white-space: nowrap;
+  }
+  .pulse {
+    position: absolute; left: 50%; top: 20%;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--violet); box-shadow: 0 0 12px 2px rgba(91, 79, 212, 0.6);
+    opacity: 0; transform: translateX(-50%);
+  }
+  .proving .pulse { animation: cross 1.6s ease-in-out infinite; }
+  @keyframes cross {
+    0%   { opacity: 0; transform: translateX(-46px); }
+    15%  { opacity: 1; }
+    50%  { opacity: 1; transform: translateX(-5px) scale(1.35); }
+    85%  { opacity: 1; }
+    100% { opacity: 0; transform: translateX(40px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .proving .pulse { animation: none; opacity: 1; transform: translateX(-50%); }
+  }
+
+  /* cards */
+  .card {
+    background: var(--veil); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .side.private .card { border-left: 3px solid var(--copper); }
+  .side.public  .card { border-right: 3px solid var(--slate); }
+  .card h2 { font: 700 15px/1.2 var(--disp); margin-bottom: 4px; }
+  .card .sub { font-size: 12.5px; color: #5d6b83; margin-bottom: 12px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  label.f { font-size: 12.5px; color: #5d6b83; display: flex; flex-direction: column; gap: 4px; }
+  input, select {
+    font: 500 13px/1 var(--mono); color: var(--ink);
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfe;
+    max-width: 130px;
+  }
+  input#verify-id { max-width: none; width: 100%; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font: 500 12px/1 var(--disp); padding: 7px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: #fbfcfe; color: var(--ink);
+  }
+  .chip[aria-pressed="true"] { background: var(--copper); border-color: var(--copper); color: #fff; }
+  .btn {
+    font: 500 13.5px/1 var(--disp); padding: 10px 16px; border-radius: 8px;
+    border: 1px solid transparent; color: #fff; background: var(--ink);
+  }
+  .btn.copper { background: var(--copper); }
+  .btn.violet { background: var(--violet); }
+  .btn.ghost { background: transparent; color: var(--danger); border-color: var(--danger); }
+  .btn.slate { background: var(--slate); }
+  .btn:disabled { opacity: 0.45; cursor: wait; }
+
+  /* ledger side */
+  .ledger { font-family: var(--mono); font-size: 12.5px; }
+  .ledger table { width: 100%; border-collapse: collapse; }
+  .ledger th {
+    text-align: left; font: 500 10px/1 var(--disp); letter-spacing: 0.12em;
+    text-transform: uppercase; color: #74839b; padding: 6px 8px 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ledger td { padding: 7px 8px 7px 0; border-bottom: 1px solid #e9eef5; word-break: break-all; }
+  .ledger .empty { color: #8a97ab; padding: 10px 0; }
+  .flag-revoked { color: var(--danger); font-weight: 500; }
+  .stat { display: flex; gap: 26px; margin-bottom: 8px; }
+  .stat div b { font: 700 20px/1.1 var(--disp); display: block; }
+  .stat div span { font-size: 11.5px; color: #74839b; }
+  .note { font-size: 12px; color: #74839b; margin-top: 10px; }
+
+  .result { font: 500 13px/1.4 var(--mono); margin-top: 8px; min-height: 18px; }
+  .result.ok { color: var(--ok); }
+  .result.bad { color: var(--danger); }
+
+  /* activity log */
+  footer {
+    border-top: 1px solid var(--line); background: #e7ecf4;
+    padding: 12px 28px; max-height: 170px; overflow-y: auto;
+  }
+  footer h3 { font: 500 10px/1 var(--disp); letter-spacing: 0.18em; text-transform: uppercase; color: #74839b; margin-bottom: 8px; }
+  #log { font: 12px/1.7 var(--mono); list-style: none; }
+  #log .who { display: inline-block; width: 76px; font-weight: 500; }
+  #log .who.principal { color: var(--copper); }
+  #log .who.agent { color: var(--violet); }
+  #log .who.verifier { color: var(--slate); }
+  #log .who.system { color: #74839b; }
+
+  /* boot overlay */
+  #boot {
+    position: fixed; inset: 0; background: var(--dawn);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    z-index: 10; text-align: center; padding: 24px;
+  }
+  #boot h2 { font: 700 26px/1.2 var(--disp); }
+  #boot p { font: 13px/1.5 var(--mono); color: var(--slate); }
+  #boot .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--violet); animation: blink 1.2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: 0.2; } }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+    .boundary { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="boot">
+    <div class="dot" aria-hidden="true"></div>
+    <h2>AgentPass Control Room</h2>
+    <p id="boot-msg">Starting local devnet containers…</p>
+  </div>
+
+  <header>
+    <h1>AgentPass <span>·</span> Control Room</h1>
+    <span class="tag">private delegation for AI agents</span>
+    <div class="grow"></div>
+    <span class="pill" id="net-pill">devnet <b>●</b></span>
+    <span class="pill" id="addr-pill" title="contract address">contract —</span>
+  </header>
+
+  <main>
+    <!-- LEFT: what never leaves the devices -->
+    <section class="side private" aria-label="On your devices">
+      <div class="side-label">On your devices — private</div>
+
+      <div class="card">
+        <h2>Principal</h2>
+        <p class="sub">You. Decide what the agent may do; the terms below never touch the chain.</p>
+        <div class="row">
+          <label class="f">Spend cap
+            <input id="cap" type="number" value="100" min="1" />
+          </label>
+          <label class="f">Valid for (days)
+            <input id="days" type="number" value="30" min="1" />
+          </label>
+        </div>
+        <div class="row">
+          <span class="chips" id="scope-chips" role="group" aria-label="Allowed actions"></span>
+        </div>
+        <div class="row">
+          <button class="btn copper" id="issue">Issue mandate</button>
+          <button class="btn ghost" id="revoke" disabled>Revoke mandate</button>
+        </div>
+        <div class="result" id="principal-result"></div>
+      </div>
+
+      <div class="card">
+        <h2>Agent</h2>
+        <p class="sub">A headless service acting for you. It holds the terms + salt you handed it, and proves — never reveals.</p>
+        <div class="row">
+          <label class="f">Action
+            <select id="action"></select>
+          </label>
+          <label class="f">Amount
+            <input id="amount" type="number" value="40" min="1" />
+          </label>
+        </div>
+        <div class="row">
+          <button class="btn violet" id="authorize" disabled>Request authorization</button>
+          <button class="btn ghost" id="adversarial" disabled>Try a forbidden action</button>
+        </div>
+        <div class="result" id="agent-result"></div>
+      </div>
+
+      <div class="card">
+        <h2>Device state</h2>
+        <div class="ledger" id="private-state">—</div>
+      </div>
+    </section>
+
+    <!-- THE BOUNDARY -->
+    <div class="boundary" id="boundary" aria-hidden="true">
+      <span class="label">zk boundary</span>
+      <span class="pulse"></span>
+    </div>
+
+    <!-- RIGHT: the public ledger -->
+    <section class="side public" aria-label="On the public ledger">
+      <div class="side-label">On the public ledger — everyone sees this, and only this</div>
+
+      <div class="card ledger">
+        <div class="stat">
+          <div><b id="stat-mandates">0</b><span>mandates</span></div>
+          <div><b id="stat-auths">0</b><span>authorizations</span></div>
+          <div><b id="stat-receipts">0</b><span>receipts</span></div>
+        </div>
+        <table aria-label="Mandates">
+          <thead><tr><th>mandate id</th><th>spent</th><th>status</th></tr></thead>
+          <tbody id="mandates-body"><tr><td colspan="3" class="empty">No mandate yet — issue one on the left.</td></tr></tbody>
+        </table>
+        <p class="note">No principal identity. No agent identity. No caps, no scopes, no expiries. Commitments hide the terms.</p>
+      </div>
+
+      <div class="card ledger">
+        <h2 style="font-family: var(--disp)">Receipts</h2>
+        <p class="sub">What a merchant or dApp reads to accept an agent's action.</p>
+        <table aria-label="Receipts">
+          <thead><tr><th>request id</th><th>action</th><th>amount</th></tr></thead>
+          <tbody id="receipts-body"><tr><td colspan="3" class="empty">No authorizations yet.</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Verifier</h2>
+        <p class="sub">Paste a receipt id — or check the most recent one.</p>
+        <div class="row"><input id="verify-id" placeholder="request id (hex)" /></div>
+        <div class="row"><button class="btn slate" id="verify" disabled>Check receipt</button></div>
+        <div class="result" id="verify-result"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <h3>Activity</h3>
+    <ul id="log"></ul>
+  </footer>
+
+<script>
+  const ACTIONS = ['purchase', 'transfer', 'subscribe', 'data-access', 'trade', 'message', 'book', 'custom'];
+  const $ = (id) => document.getElementById(id);
+  let lastRequestId = '';
+  let scope = new Set([0, 2]);
+
+  // scope chips
+  const chips = $('scope-chips');
+  ACTIONS.forEach((name, i) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.textContent = name;
+    b.setAttribute('aria-pressed', String(scope.has(i)));
+    b.addEventListener('click', () => {
+      scope.has(i) ? scope.delete(i) : scope.add(i);
+      b.setAttribute('aria-pressed', String(scope.has(i)));
+    });
+    chips.appendChild(b);
+  });
+  const actionSel = $('action');
+  ACTIONS.forEach((name, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = `${i} · ${name}`;
+    actionSel.appendChild(o);
+  });
+
+  const setBusy = (busy) => {
+    $('boundary').classList.toggle('proving', busy);
+    ['issue', 'revoke', 'authorize', 'adversarial', 'verify'].forEach((id) => {
+      $(id).dataset.busy = busy ? '1' : '';
+    });
+    refreshButtons();
+  };
+
+  let hasMandate = false;
+  const refreshButtons = () => {
+    const busy = $('issue').dataset.busy === '1';
+    $('issue').disabled = busy;
+    $('revoke').disabled = busy || !hasMandate;
+    $('authorize').disabled = busy || !hasMandate;
+    $('adversarial').disabled = busy || !hasMandate;
+    $('verify').disabled = busy || !lastRequestId && !$('verify-id').value;
+  };
+
+  const api = async (path, body) => {
+    const res = await fetch(path, {
+      method: body ? 'POST' : 'GET',
+      headers: body ? { 'content-type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    return data;
+  };
+
+  const act = async (button, resultEl, fn, okText) => {
+    setBusy(true);
+    resultEl.className = 'result'; resultEl.textContent = 'Generating ZK proof…';
+    try {
+      const out = await fn();
+      resultEl.className = 'result ok';
+      resultEl.textContent = okText(out);
+    } catch (e) {
+      resultEl.className = 'result bad';
+      resultEl.textContent = e.message;
+    } finally {
+      setBusy(false);
+      poll();
+    }
+  };
+
+  $('issue').addEventListener('click', () =>
+    act($('issue'), $('principal-result'),
+      () => api('/api/issue', { cap: $('cap').value, days: Number($('days').value), actions: [...scope] }),
+      (o) => `Issued. Mandate ${o.mandateId.slice(0, 18)}…`));
+
+  $('revoke').addEventListener('click', () =>
+    act($('revoke'), $('principal-result'),
+      () => api('/api/revoke', {}),
+      () => 'Revoked. The agent can no longer prove anything.'));
+
+  $('authorize').addEventListener('click', () =>
+    act($('authorize'), $('agent-result'),
+      async () => {
+        const out = await api('/api/authorize', { action: Number(actionSel.value), amount: $('amount').value });
+        lastRequestId = out.requestId; $('verify-id').value = out.requestId;
+        return out;
+      },
+      (o) => `Authorized. Receipt ${o.requestId.slice(0, 18)}…`));
+
+  $('adversarial').addEventListener('click', () =>
+    act($('adversarial'), $('agent-result'),
+      () => api('/api/adversarial', { kind: 'scope' }),
+      (o) => o.rejected ? `Rejected at proof time: ${o.message}` : 'UNEXPECTED: accepted'));
+
+  $('verify').addEventListener('click', () =>
+    act($('verify'), $('verify-result'),
+      () => api('/api/verify', { requestId: $('verify-id').value || lastRequestId }),
+      (o) => o.found
+        ? `VERIFIED — action '${ACTIONS[o.receipt.action]}', amount ${o.receipt.amount}. Nothing else disclosed.`
+        : 'Not found on the ledger.'));
+  $('verify-id').addEventListener('input', refreshButtons);
+
+  const poll = async () => {
+    try {
+      const s = await api('/api/state');
+      $('boot-msg').textContent = s.bootMessage || '';
+      if (s.status === 'ready') {
+        $('boot').style.display = 'none';
+        $('addr-pill').textContent = 'contract ' + s.contractAddress.slice(0, 14) + '…';
+      } else if (s.status === 'failed') {
+        $('boot-msg').textContent = 'Devnet failed to start: ' + s.bootMessage;
+        $('net-pill').classList.add('err');
+        return;
+      }
+      // private side
+      const p = s.private;
+      hasMandate = !!(p.mandate && p.mandate.id);
+      $('private-state').innerHTML = `
+        principal.secretKey&nbsp;&nbsp;${p.principal.secretKey}<br/>
+        agent.secretKey&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${p.agent.secretKey}<br/>
+        agent.publicKey&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${p.agent.publicKey}<br/>` +
+        (p.mandate
+          ? `mandate.cap&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${p.mandate.cap}<br/>
+             mandate.scope&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[${p.mandate.scope.map((i) => ACTIONS[i]).join(', ')}]<br/>
+             mandate.expiry&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${new Date(p.mandate.expiry).toISOString().slice(0, 10)}`
+          : `mandate&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(none)`);
+      // ledger side
+      if (s.ledger) {
+        $('stat-mandates').textContent = s.ledger.mandates.length;
+        $('stat-auths').textContent = s.ledger.authorizations;
+        $('stat-receipts').textContent = s.ledger.receipts.length;
+        $('mandates-body').innerHTML = s.ledger.mandates.length
+          ? s.ledger.mandates.map((m) =>
+              `<tr><td>${m.id.slice(0, 22)}…</td><td>${m.spent}</td>
+               <td>${m.revoked ? '<span class="flag-revoked">revoked</span>' : 'live'}</td></tr>`).join('')
+          : '<tr><td colspan="3" class="empty">No mandate yet — issue one on the left.</td></tr>';
+        $('receipts-body').innerHTML = s.ledger.receipts.length
+          ? s.ledger.receipts.map((r) =>
+              `<tr><td>${r.requestId.slice(0, 22)}…</td><td>${r.action} · ${ACTIONS[r.action]}</td><td>${r.amount}</td></tr>`).join('')
+          : '<tr><td colspan="3" class="empty">No authorizations yet.</td></tr>';
+      }
+      // log
+      $('log').innerHTML = s.log.slice().reverse().map((e) =>
+        `<li><span class="who ${e.who}">${e.who}</span>${e.text}</li>`).join('');
+      refreshButtons();
+    } catch (e) {
+      /* server not up yet — keep polling */
+    }
+  };
+
+  poll();
+  setInterval(poll, 2500);
+</script>
+</body>
+</html>
