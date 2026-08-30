@@ -38,9 +38,10 @@ never leave your browser.
 cd agentpass-cli
 npm run devnet:up
 
-# 2. Install a wallet (e.g. Lace from the Chrome Web Store), create a wallet,
-#    then in its settings pick network "Undeployed" and proof server
-#    http://localhost:6300
+# 2. Install a wallet (for example 1AM or Lace from the Chrome Web Store),
+#    create a wallet, then in its settings pick network "Undeployed".
+#    Grant delegates proving to wallets with an embedded prover (1AM);
+#    only wallets without one need the proof server at http://localhost:6300
 
 # 3. Fund your wallet with NIGHT from the devnet genesis supply. Copy the
 #    address starting mn_addr_undeployed1… from your wallet (NOT the mn_dust_…

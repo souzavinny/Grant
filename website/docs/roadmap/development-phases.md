@@ -24,8 +24,9 @@ filters and search, agent detail pages (permission manifest, receipt-backed trac
 the permission sheet with a user-editable cap, dashboard with spend rings, **Test the limits** (a forbidden action
 dying at proof time, on demand), the receipt-anatomy view ("contains vs deliberately omits"), and the fire flow with
 on-chain revocation. Browse works with no wallet; connect-on-demand resumes a pending hire after the wallet
-approves; sessions persist locally across refreshes. Wallets: Lace, Gero, 1AM (DApp connector 4.x), and the
-complete hire → task → receipt loop has been exercised end-to-end with a real user wallet.
+approves; sessions persist locally across refreshes. Wallets: Lace, Gero, 1AM (DApp connector 4.x), with proving
+delegated to the wallet's embedded prover, so hiring needs no proof server; the complete hire → task → receipt
+loop has been exercised end-to-end with a real user wallet.
 
 **Surfaces & tooling.** Beyond the dApp: a walletless Grant demo (`npm run app`), the engineer Control Room with the
 dual-ledger state visible (`npm run demo:server`), two scripted e2e suites kept green as regression gates (the

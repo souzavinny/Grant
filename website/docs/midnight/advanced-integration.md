@@ -12,7 +12,7 @@ claim of "working."
 | Component | Role in Grant | Where it runs |
 |---|---|---|
 | Midnight node + indexer | Ledger state and GraphQL reads (receipts, spend, revocations) | Local devnet (fixed ports 9944/8088) or network |
-| Proof server | Generates the zero-knowledge proofs for issue/authorize/revoke | Local (:6300), so secrets never leave the machine |
+| Proving | The wallet's embedded prover, obtained through the connector's `getProvingProvider`; a local proof server is the fallback and serves the walletless and agent surfaces | In the user's wallet or on their machine, so witnesses never leave their custody |
 | DApp connector (API 4.x) | The user's wallet balances, signs, and submits every transaction | Lace / Gero / 1AM browser extension |
 | ZK config provider | Serves prover/verifier keys + circuit IR to the browser | Bundled with the dApp at its own origin |
 | Private-state provider | Holds each party's secrets during circuit execution | In-memory in the browser; LevelDB in the services |

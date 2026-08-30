@@ -32,6 +32,7 @@ work. Grant's answer is **two**: pick an agent, tap Allow.
 
 ## Current friction and the plan
 
+Proving requires no setup with wallets that embed a prover: Grant delegates proof generation to the wallet.
 Self-custody on a local devnet still requires funding (one faucet command) and wallet-side fee-resource generation,
 workable for builders and evaluators, not for consumers. The consumer answer is Wave-3 **passkey onboarding**: same
 credentials, no wallet concept. Onboarding is *designed* in Wave 1 and *finished* when a non-technical user's

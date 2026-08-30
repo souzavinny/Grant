@@ -13,7 +13,7 @@ appears exactly once in the UI: a footnote reading "secured by zero-knowledge pr
 |---|---|---|
 | **Browse freely** | Anyone curious | Nothing. The landing page, agent directory, and every agent's detail page (permissions, track record, "what it can never do") work with no wallet, no account, no cookie wall. |
 | **Walletless demo** | Evaluators who want to feel the full loop in minutes | One command (`npm run app`): a server custodies a devnet wallet, and the browser drives real credentials, real proofs, real receipts. |
-| **Bring your own wallet** | Users who want self-custody | Any Midnight DApp-connector wallet: Lace, Gero, or 1AM. The wallet signs every credential; keys never leave it. |
+| **Bring your own wallet** | Users who want self-custody | Any Midnight DApp-connector wallet: Lace, Gero, or 1AM. The wallet signs, and with an embedded prover (1AM has one) also proves, every credential; keys never leave it. |
 
 ## Connect-on-demand, not connect-to-enter
 
@@ -35,5 +35,7 @@ user was*: the permission sheet for the agent they chose opens automatically. No
 On a local devnet, self-custody users must fund their wallet (the repo faucet sends NIGHT in one command) and let the
 wallet generate DUST for fees, a step the wallet performs because fee-resource registration must be signed by the
 key owner. This exact path is verified end-to-end (`npm run faucet -- --self-test`) and documented in the README.
+Proving is not on this list: Grant delegates proof generation to the wallet's embedded prover when the
+connector offers one, and requires a local proof server only for wallets without it.
 The Wave-3 answer is passkey-based walletless onboarding, which removes the wallet concept for consumers entirely
 while keeping self-custody semantics.

@@ -66,6 +66,8 @@ full protocol runs end-to-end on a local devnet with real proofs. Details in
 - Agent directory with category filters, search, permission manifests, and receipt-backed track records
 - OS-style permission sheet with a user-editable spending cap
 - Bring-your-own-wallet: any Midnight DApp-connector wallet (Lace, Gero, 1AM) signs every credential
+- Wallet-embedded proving: no proof server needed with wallets that bundle a prover (such as 1AM); a
+  proof-server fallback covers the rest
 - Browse without a wallet; connect-on-demand resumes your hire exactly where it paused; sessions persist locally
 - Live dashboard: spend rings, receipts, **Test the limits** (watch a forbidden action die at proof time), one-tap Fire
 - Receipt anatomy view: exactly what the world sees, and what is deliberately absent

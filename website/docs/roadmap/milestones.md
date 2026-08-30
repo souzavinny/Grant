@@ -20,6 +20,7 @@ Checkpoints with pass/fail criteria, because "done" should be checkable, not fel
 | One-command experiences | `npm run app` (walletless Grant), `npm run demo` (protocol e2e), `npm run app:e2e` (multi-agent suite), `npm run demo:server` (engineer console), `npm run devnet:up` (fixed-port devnet), `npm run faucet -- --self-test` (wallet funding path) |
 | Presentation groundwork | 12 slides of pitch-deck content, the privacy-design deep dive, and recorded demo walkthroughs |
 | Documentation site | This site: architecture, zero-knowledge design, UX, business, roadmap |
+| Hire with nothing but a wallet | Proving delegated to the wallet's embedded prover through the DApp connector, verified with a 1AM hire on the preprod contract with no proof server running; a proof-server fallback covers wallets without embedded proving |
 | Live on a public network | AgentPass deployed to Midnight preprod (contract `36bce435…b2abd8`) after a pre-deployment security review; on-chain smoke test: mandate issued, authorization proven, receipt read back from the public indexer |
 
 ## Wave 1 release targets
