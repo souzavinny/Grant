@@ -1,0 +1,68 @@
+{
+  "name": "grant",
+  "bucket": "grant-20260830163012",
+  "preset": "html",
+  "env": "production",
+  "prefix": "20260830171749",
+  "rotate-prefix": true,
+  "not-first-run": true,
+  "function": [],
+  "application": {
+    "id": 1788113006,
+    "name": "grant"
+  },
+  "domain": {
+    "id": 0,
+    "name": "__DEFAULT__",
+    "domain_name": "",
+    "url": ""
+  },
+  "rt-purge": {
+    "purge_on_publish": true
+  },
+  "origin": null,
+  "rules-engine": {
+    "created": false,
+    "rules": [
+      {
+        "id": 690525,
+        "name": "Deliver Static Assets and Set Cache Policy",
+        "phase": "request"
+      },
+      {
+        "id": 690526,
+        "name": "Redirect to index.html",
+        "phase": "request"
+      },
+      {
+        "id": 690527,
+        "name": "Redirect to index.html for Subpaths",
+        "phase": "request"
+      }
+    ]
+  },
+  "cache-settings": [
+    {
+      "id": 334538,
+      "name": "grant"
+    }
+  ],
+  "workloads": {
+    "id": 1788117152,
+    "name": "grant",
+    "domains": [],
+    "url": "https://r82zpe1auu4.map.azionedge.net",
+    "deployment_id": [
+      {
+        "id": 303948,
+        "name": "grant"
+      }
+    ]
+  },
+  "connectors": [
+    {
+      "id": 114460,
+      "name": "grant"
+    }
+  ]
+}

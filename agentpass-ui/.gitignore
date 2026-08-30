@@ -1,3 +1,8 @@
 !package-lock.json
 .vite
 node_modules/
+#Paths added by Azion CLI
+.edge/
+.vulcan
+.open-next
+node_modules
