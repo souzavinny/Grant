@@ -63,6 +63,12 @@ table th {
   text-transform: uppercase;
 }
 
+/* mermaid diagrams sit centered in the content column */
+.docusaurus-mermaid-container {
+  display: flex;
+  justify-content: center;
+}
+
 /* navbar: paper, hard hairline */
 .navbar {
   background: var(--ifm-background-surface-color);
