@@ -63,12 +63,14 @@ full protocol runs end-to-end on a local devnet with real proofs. Details in
 
 ## Core features (working today)
 
-- Agent directory with permission manifests and receipt-backed track records
+- Agent directory with category filters, search, permission manifests, and receipt-backed track records
 - OS-style permission sheet with a user-editable spending cap
 - Bring-your-own-wallet: any Midnight DApp-connector wallet (Lace, Gero, 1AM) signs every credential
+- Browse without a wallet; connect-on-demand resumes your hire exactly where it paused; sessions persist locally
 - Live dashboard: spend rings, receipts, **Test the limits** (watch a forbidden action die at proof time), one-tap Fire
 - Receipt anatomy view: exactly what the world sees — and what is deliberately absent
-- Walletless demo mode and an engineer console, sharing the same contract
+- Walletless demo mode, an engineer console, two scripted e2e suites, a one-command devnet and faucet — all sharing
+  the same contract
 
 :::tip Verification status
 15 adversarial contract tests · witness pipeline **Confirmed** with Midnight's official verify tooling · all 3

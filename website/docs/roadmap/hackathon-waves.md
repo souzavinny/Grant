@@ -19,14 +19,17 @@ We also read the meta-goal honestly: protocols run hackathons to find applicatio
 ships **infrastructure and a consumer application on top of it** — AgentPass proves technical depth, Grant proves
 someone would actually use it. The pairing is the submission.
 
-## Wave 1 — the working core *(submitted)*
+## Wave 1 — the working core *(built; submission due September 16, 2026)*
 
-Everything in [development phases § Phase 1](development-phases.md): verified contract, typed API, the Grant dApp
-with real wallet support, demo surfaces, docs. Deadline September 16, 2026.
+Everything in [development phases § Phase 1](development-phases.md): the four-route-verified contract, typed API,
+the Grant dApp with real wallet support and the full design system, four demo/tooling surfaces, and this docs site.
+What remains before the deadline is packaging — video, public repo, slide export, the AKINDO form.
 
 **What a judge can do in five minutes:** run `npm run app`, hire SubManager through the permission sheet (lowering
 the cap), watch a receipt land, press *Test the limits* to see an unauthorized action die at proof time, and fire
-the agent — every step a real transaction on a local Midnight devnet.
+the agent — every step a real transaction on a local Midnight devnet. With more time: connect their own Lace / Gero
+/ 1AM wallet (funded by `npm run faucet`) and run the same loop self-custodied, replay the adversarial e2e suite
+(`npm run app:e2e`), or watch the dual-ledger state move in the engineer console (`npm run demo:server`).
 
 ## Wave 2 — open the platform *(planned)*
 

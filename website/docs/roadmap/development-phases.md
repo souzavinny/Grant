@@ -11,11 +11,30 @@ verified; later phases are planned scope, labeled as such.
 
 **Thesis:** private, enforceable delegation is possible, and a non-crypto user can operate it.
 
-Delivered: the AgentPass contract (three circuits, verified through four independent routes — tests, witness
-pipeline, PLONK checker, live-devnet e2e), the typed API, the Grant dApp with the full product design system
-(directory, agent pages, permission sheet, dashboard, receipt anatomy, fire flow), wallet support (Lace / Gero /
-1AM) with connect-on-demand, a walletless demo surface, an engineer console, a devnet faucet, and this documentation
-site. The complete loop has been exercised with a real user wallet end-to-end.
+Delivered, by layer:
+
+**Protocol & verification.** The AgentPass contract — three proof circuits plus pure derivations — with 15
+adversarial tests (tampered terms, wrong agent, replay, over-cap, non-principal revocation) and the typed two-party
+`AgentPassAPI`. Verified through four independent routes: the test suite, Midnight's official witness pipeline
+(**Confirmed**), the network-grade PLONK checker (all circuits accepted, tampered negative-control rejected), and
+repeated live-devnet end-to-end runs.
+
+**Product.** The Grant wallet dApp wearing the full design system: marketing landing, agent directory with category
+filters and search, agent detail pages (permission manifest, receipt-backed track record, "what it can never do"),
+the permission sheet with a user-editable cap, dashboard with spend rings, **Test the limits** (a forbidden action
+dying at proof time, on demand), the receipt-anatomy view ("contains vs deliberately omits"), and the fire flow with
+on-chain revocation. Browse works with no wallet; connect-on-demand resumes a pending hire after the wallet
+approves; sessions persist locally across refreshes. Wallets: Lace, Gero, 1AM (DApp connector 4.x) — and the
+complete hire → task → receipt loop has been exercised end-to-end with a real user wallet.
+
+**Surfaces & tooling.** Beyond the dApp: a walletless Grant demo (`npm run app`), the engineer Control Room with the
+dual-ledger state visible (`npm run demo:server`), two scripted e2e suites kept green as regression gates — the
+protocol tour (`npm run demo`) and the multi-agent suite with a cross-agent theft attempt (`npm run app:e2e`) — a
+fixed-port local devnet (`npm run devnet:up`), and a faucet whose `--self-test` proves the full wallet-funding path.
+
+**Design & communication.** The brand system shipped as an in-repo asset (perforated seal, 12-icon set, token
+sheet), the privacy-design deep dive, 12 slides of pitch-deck content, recorded demo walkthroughs, and this
+documentation site.
 
 ## Phase 2 — Prove other builders can use it *(Wave 2 — planned)*
 
