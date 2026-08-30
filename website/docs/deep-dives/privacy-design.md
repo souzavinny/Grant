@@ -2,7 +2,7 @@
 title: "Privacy design (deep dive)"
 ---
 
-# AgentPass — Privacy Design
+# AgentPass privacy design
 
 > **Grant mapping.** The Grant app is a thin product skin over these exact
 > circuits: *Hire* (Allow on the permission sheet) = `issueMandate`, an agent
@@ -12,8 +12,8 @@ title: "Privacy design (deep dive)"
 > the one agent it was granted to.
 
 AgentPass issues **private delegation credentials for AI agents** ("Know Your Agent").
-A human principal grants an agent a *mandate* — spend cap, allowed action
-categories, expiry — and the agent proves, in zero knowledge, that a specific
+A human principal grants an agent a *mandate* (spend cap, allowed action
+categories, expiry) and the agent proves, in zero knowledge, that a specific
 action is authorized. The verifier learns *that* the action is authorized,
 never *who* delegated it or *what else* the agent is allowed to do.
 
@@ -43,13 +43,13 @@ Midnight contracts split state across two worlds. AgentPass uses both deliberate
 
 ## What each circuit proves and discloses
 
-**`issueMandate`** — proves the caller knows a principal key and nonce deriving
+**`issueMandate`** proves the caller knows a principal key and nonce deriving
 the mandateId (domain-separated `persistentHash`), and binds the terms with
 `persistentCommit(terms, salt)`. Discloses: mandateId, commitment. The
 principal's public key never appears; two mandates from the same principal are
 unlinkable (different nonces → unrelated hashes).
 
-**`proveAuthorized(mandateId, requestId, action, amount)`** — inside the proof:
+**`proveAuthorized(mandateId, requestId, action, amount)`**. Inside the proof:
 commitment equality (witnessed terms match the on-chain commitment), agent-key
 binding (`derivePk(agentSecretKey) == terms.agentPk`), scope membership
 (constant-index fold over `Vector<8, Boolean>`), cumulative budget
@@ -59,15 +59,15 @@ only: mandateId, requestId, action category, amount, updated spend total.
 **Expiry without revealing expiry.** `kernel.blockTimeLessThan` takes a public
 argument, so proving `blockTime < expiry` directly would publish the mandate's
 expiry. Instead the agent picks a coarse `timeBound` and the circuit proves
-`blockTime < timeBound <= expiry` — the chain sees only the agent-chosen bound
+`blockTime < timeBound <= expiry`: the chain sees only the agent-chosen bound
 (observed compiler behavior: the direct form is rejected as an undeclared
 disclosure; this construction compiles cleanly).
 
-**`revokeMandate`** — re-derives the mandateId from the principal's witnessed
+**`revokeMandate`** re-derives the mandateId from the principal's witnessed
 secret key + nonce, so only the issuer can revoke. The agent knows the
 mandateId but cannot produce this proof.
 
-## What an observer learns — honest accounting (v0.1)
+## What an observer learns (v0.1)
 
 An observer sees: a mandate exists (pseudonymous), its cumulative authorized
 spend, action categories and amounts per authorization, timing, and revocation
@@ -76,19 +76,19 @@ agent's identity, the cap, the scope, the expiry, or any linkage between two
 mandates of the same principal.
 
 **Known linkage (v0.1):** all authorizations under one mandate share the public
-mandateId — actions are linkable to each other (not to the principal). This is
+mandateId: actions are linkable to each other (not to the principal). This is
 a deliberate Wave 1 trade-off to keep budget enforcement simple.
 
 **Wave 2 roadmap:** replace Map-keyed spend tracking with a
 `HistoricMerkleTree` note-chain (each authorization consumes a budget note via
 nullifier and inserts a re-blinded successor note), making authorizations
-mutually unlinkable while keeping cumulative-cap enforcement — the same
+mutually unlinkable while keeping cumulative-cap enforcement, the same
 commitment/nullifier pattern used across the Midnight ecosystem.
 
 ## Threat notes
 
 - **Witness trust boundary:** every witness value is bound by an in-circuit
-  check — terms/salt by commitment equality, agent key by `terms.agentPk`,
+  check: terms/salt by commitment equality, agent key by `terms.agentPk`,
   principal key by mandateId re-derivation, timeBound by `<= expiry`. A party
   lying in its witness fails an assert; tests cover the tampered-cap, wrong
   agent, and non-principal-revoke cases.
@@ -98,4 +98,4 @@ commitment/nullifier pattern used across the Midnight ecosystem.
 - **Replay:** requestIds are single-use (`receipts.member` check); a verifier
   should generate a fresh random requestId per transaction.
 - **Small-anonymity-set caveat:** with very few mandates on-chain, timing
-  correlation can weaken pseudonymity — standard for nullifier-style systems.
+  correlation can weaken pseudonymity, standard for nullifier-style systems.

@@ -4,19 +4,19 @@ title: Value proposition
 
 # Value proposition and problems solved
 
-## Our core value proposition
+## Core value proposition
 
-**Delegation without surrender.** Grant turns "give the agent my password" into "grant the agent a permission" —
+**Delegation without surrender.** Grant turns "give the agent my password" into "grant the agent a permission":
 capped, scoped, expiring, revocable, and cryptographically enforced, while the human stays anonymous.
 
-## The problems we solve
+## The problems Grant solves
 
 ### 1 · The all-or-nothing access problem
 
 Today, an AI agent that shops or books for you needs your credentials: a card number, an account password, an API
-key. Each of those is *total* access — the agent (and its operator, and anyone who compromises either) can do
+key. Each of those is *total* access: the agent (and its operator, and anyone who compromises either) can do
 everything you can do, for as long as the credential lives, with no built-in undo. The rational response is the one
-most people choose: don't delegate at all.
+most people choose: do not delegate at all.
 
 ### 2 · The identity-leak problem in agent payments
 
@@ -35,7 +35,7 @@ record or a user can bound its behavior.
 
 | Problem | Grant's mechanism | Guarantee class |
 |---|---|---|
-| All-or-nothing access | Scoped credential: spend cap (user-editable at grant time), action categories, expiry, one-tap revocation | Enforced in a ZK circuit — an out-of-scope action cannot produce a valid proof, so it cannot execute |
+| All-or-nothing access | Scoped credential: spend cap (user-editable at grant time), action categories, expiry, one-tap revocation | Enforced in a zero-knowledge circuit: an out-of-scope action cannot produce a valid proof, so it cannot execute |
 | Identity leakage | Pseudonymous mandate ids + hiding commitments; receipts disclose only action and amount | Cryptographic: the chain never holds the principal's identity, caps, scopes, or expiries |
 | Agent trust | Receipts, not reviews: every completed task is a verifiable public record bound to the agent's credential | Publicly auditable by anyone, forgeable by no one |
 
@@ -45,7 +45,7 @@ Web2 permission systems (OAuth scopes, virtual cards, API-key restrictions) are 
 company**: revocation is a support flow, scopes are checked by the same party that profits from ignoring them, and
 every grant identifies you. Grant's permissions are **mathematical objects**: the limit is part of the proof the
 agent must produce, revocation is a ledger fact no one can un-write, and the grantor is a pseudonym. The user-facing
-gesture stays identical — a permission sheet and an Allow button — which is exactly the point: familiar UX, upgraded
+gesture stays identical (a permission sheet and an Allow button), which is exactly the point: familiar UX, upgraded
 guarantee.
 
 :::info One-line pitch

@@ -1,36 +1,36 @@
 ---
 id: index
-title: Grant — hire AI agents with permissions, not passwords
+title: Grant · hire AI agents with permissions, not passwords
 slug: /
 ---
 
-# Grant — hire AI agents with *permissions*, not passwords
+# Grant · hire AI agents with *permissions*, not passwords
 
 **Grant lets people safely delegate real tasks to AI agents.** Instead of handing an agent your passwords, cards, or
-API keys, you grant it a **private, revocable credential** on the Midnight network — enforced by zero-knowledge
+API keys, you grant it a **private, revocable credential** on the Midnight network, enforced by zero-knowledge
 cryptography, not promises.
 
 *Documentation for the Midnight Buildathon 2026.*
 
 ## Executive summary
 
-2025 shipped the payment rails for the agent economy — Visa Intelligent Commerce, Mastercard Agent Pay, Google's AP2,
+2025 shipped the payment rails for the agent economy: Visa Intelligent Commerce, Mastercard Agent Pay, Google's AP2,
 Stripe/OpenAI's checkout protocol. None of them has a privacy layer: authorizing an agent today means revealing who
 you are and everything you allow it to do. Grant closes that gap with the most familiar trust gesture in computing:
 an app-style **permission sheet**. Tapping *Allow* issues the agent a scoped credential (spend cap, action
 categories, expiry). Every task the agent performs is a zero-knowledge proof that the action was inside those limits,
-leaving a verifiable public receipt. Anything outside the limits is blocked *before it happens* — no valid proof can
+leaving a verifiable public receipt. Anything outside the limits is blocked *before it happens*: no valid proof can
 exist for an action you never allowed. One tap fires the agent: its credential is revoked on-chain, everywhere,
 forever.
 
 ## Two layers, one product
 
-We deliberately built this as **infrastructure plus an app on top**, because each solves a different problem:
+The project is deliberately built as **infrastructure plus an app on top**, because each solves a different problem:
 
 | Layer | What it is | Why it exists |
 |---|---|---|
-| **AgentPass** (infrastructure) | Private delegation credentials on Midnight: a Compact smart contract (issue / prove-authorized / revoke), a TypeScript API, and verification tooling | The credential rails are reusable by *any* agent platform — the "Know Your Agent" layer the 2025 payment rails are missing. Infrastructure is what the ecosystem adopts. |
-| **Grant** (application) | A consumer dApp: agent directory, permission sheets, dashboard, receipts — connected to the user's own Midnight wallet | Infrastructure alone doesn't recruit users. Networks grow through apps people understand in one screen. Grant is the proof that the rails carry a real product. |
+| **AgentPass** (infrastructure) | Private delegation credentials on Midnight: a Compact smart contract (issue / prove-authorized / revoke), a TypeScript API, and verification tooling | The credential rails are reusable by *any* agent platform, the "Know Your Agent" layer the 2025 payment rails are missing. Infrastructure is what the ecosystem adopts. |
+| **Grant** (application) | A consumer dApp: agent directory, permission sheets, dashboard, receipts, connected to the user's own Midnight wallet | Infrastructure alone does not recruit users. Networks grow through apps people understand in one screen. Grant is the proof that the rails carry a real product. |
 
 See [System architecture](architecture/system-architecture.md) for the full rationale.
 
@@ -45,35 +45,35 @@ See [System architecture](architecture/system-architecture.md) for the full rati
 
 ## The solution
 
-- **Permission sheets → credentials.** The grant is capped, scoped, expiring, and revocable — issued by the user's
+- **Permission sheets → credentials.** The grant is capped, scoped, expiring, and revocable, issued by the user's
   own wallet.
 - **Proof-time enforcement.** Limits are checked inside a ZK circuit; out-of-scope actions cannot produce a proof and
   therefore cannot execute.
-- **Receipts, not reviews.** Every task posts a pseudonymous, verifiable receipt — an agent's track record becomes
+- **Receipts, not reviews.** Every task posts a pseudonymous, verifiable receipt: an agent's track record becomes
   math anyone can check.
 - **The grantor stays anonymous.** Merchants and agents see valid authorization, never the human behind it.
 
 ## Midnight integration
 
-Grant is native to Midnight's core capability — *prove facts, not data*. Mandate terms live on the user's device; the
+Grant is native to Midnight's core capability: *prove facts, not data*. Mandate terms live on the user's device; the
 chain holds only hiding commitments, pseudonymous ids, spend totals, receipts, and revocations. The contract compiles
 with the official Compact toolchain, all three proof circuits are accepted by the network's PLONK checker, and the
 full protocol runs end-to-end on a local devnet with real proofs. Details in
 [Why Midnight](midnight/overview.md) and [Advanced integration & verification](midnight/advanced-integration.md).
 
-## Core features (working today)
+## Core features (Wave 1)
 
 - Agent directory with category filters, search, permission manifests, and receipt-backed track records
 - OS-style permission sheet with a user-editable spending cap
 - Bring-your-own-wallet: any Midnight DApp-connector wallet (Lace, Gero, 1AM) signs every credential
 - Browse without a wallet; connect-on-demand resumes your hire exactly where it paused; sessions persist locally
 - Live dashboard: spend rings, receipts, **Test the limits** (watch a forbidden action die at proof time), one-tap Fire
-- Receipt anatomy view: exactly what the world sees — and what is deliberately absent
-- Walletless demo mode, an engineer console, two scripted e2e suites, a one-command devnet and faucet — all sharing
+- Receipt anatomy view: exactly what the world sees, and what is deliberately absent
+- Walletless demo mode, an engineer console, two scripted end-to-end test suites, a one-command devnet and faucet, all sharing
   the same contract
 
 :::tip Verification status
-15 adversarial contract tests · witness pipeline **Confirmed** with Midnight's official verify tooling · all 3
+15 adversarial contract tests · witness pipeline **Confirmed** with Midnight's official verify tooling · all three
 circuits **PLONK-accepted** (with a tamper negative-control rejected) · two scripted end-to-end suites green on a
 live devnet · full wallet flow exercised with a real 1AM wallet.
 :::

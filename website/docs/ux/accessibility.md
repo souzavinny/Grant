@@ -5,7 +5,7 @@ title: Accessibility
 # Accessibility
 
 A product whose thesis is "trust for everyone" cannot gate that trust on perfect vision, fine motor control, or
-tolerance for motion. This page states our accessibility principles, what the current build does, and what is
+tolerance for motion. This page states the accessibility principles, what the current build does, and what is
 planned.
 
 ## Principles
@@ -17,8 +17,8 @@ planned.
   and controls contrast well above the WCAG AA 4.5:1 threshold for body text; the design system has no low-contrast
   gray-on-gray states.
 - **Motion is optional.** The few orchestrated animations (sheet slide-up, proving pulse, stamp-in, the seal's slow
-  ring) all collapse under `prefers-reduced-motion` — implemented in `grant.css`, not aspirational.
-- **Plain language is an accessibility feature.** "Hire", "Fire", "receipt", "you can lower this" — vocabulary
+  ring) all collapse under `prefers-reduced-motion`, implemented in `grant.css`, not aspirational.
+- **Plain language is an accessibility feature.** "Hire", "Fire", "receipt", "you can lower this": vocabulary
   chosen for a reader with no crypto context is the same vocabulary that serves readers with cognitive-load
   constraints. Error copy states what happened and what happens next, in one sentence.
 - **One decision per screen.** The permission sheet asks exactly one question. Dense dual-ledger detail lives on the

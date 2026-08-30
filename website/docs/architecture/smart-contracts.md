@@ -22,7 +22,7 @@ audit surface of a credential system.
 Six witnesses feed the circuits, split across the two parties. The principal holds `principalSecretKey` and
 `mandateNonce`; both parties hold the `MandateTerms` struct (cap, expiry, agent public key, 8-slot scope vector) and
 the blinding `mandateSalt`; the agent holds `agentSecretKey` and picks the public `timeBound` per action. The
-TypeScript witness layer models the parties as separate private states — invoking a circuit with the wrong party's
+TypeScript witness layer models the parties as separate private states: invoking a circuit with the wrong party's
 state fails fast client-side, while the enforcement always lives in the circuit's asserts.
 
 ## Circuit walkthrough
@@ -60,15 +60,15 @@ revokedMandates.insert(mandateId)
 ## Pure derivations for the DApp layer
 
 `agentPublicKey(sk)` and `mandateIdFor(pk, nonce)` are exported pure circuits: the TypeScript layer computes the
-exact same hashes the circuits enforce (locally — calling them puts nothing on-chain), so ids shown in the UI are
+exact same hashes the circuits enforce (locally: calling them puts nothing on-chain), so ids shown in the UI are
 derived, never guessed.
 
 ## The API layer
 
 `AgentPassAPI` wraps the compiled contract for both parties: `deploy` (principal) and `join` (either party, own
 private-state id), then `issueMandate`, `proveAuthorized` (generating a fresh requestId per call), and
-`revokeMandate`. It is provider-agnostic — the same class runs in the browser (wallet-signed) and in Node services
-(facade wallet) — which is what keeps three surfaces on one code path.
+`revokeMandate`. It is provider-agnostic: the same class runs in the browser (wallet-signed) and in Node services
+(facade wallet), which is what keeps three surfaces on one code path.
 
 :::note Source
 `contract/src/agentpass.compact` · tests: `contract/src/test/agentpass.test.ts` (15 cases, adversarial included).
