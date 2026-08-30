@@ -21,6 +21,9 @@ const config = {
 
   i18n: { defaultLocale: 'en', locales: ['en'] },
 
+  markdown: { mermaid: true },
+  themes: ['@docusaurus/theme-mermaid'],
+
   presets: [
     [
       'classic',
@@ -55,6 +58,47 @@ const config = {
       },
       prism: {
         // theme is resolved in the classic preset defaults; keep defaults
+      },
+      // Mermaid diagrams wear the Grant design system: paper surfaces, hard
+      // ink borders, allow-blue accents, the site's own type stack.
+      mermaid: {
+        theme: { light: 'base', dark: 'base' },
+        options: {
+          fontFamily: "'Schibsted Grotesk', system-ui, sans-serif",
+          fontSize: 14,
+          flowchart: { curve: 'linear', padding: 14, nodeSpacing: 46, rankSpacing: 64 },
+          themeVariables: {
+            fontFamily: "'Schibsted Grotesk', system-ui, sans-serif",
+            fontSize: '14px',
+            primaryColor: '#fcfaf4',
+            primaryTextColor: '#201d16',
+            primaryBorderColor: '#201d16',
+            secondaryColor: '#e6e9f8',
+            secondaryBorderColor: '#2440d4',
+            secondaryTextColor: '#201d16',
+            tertiaryColor: '#f3efe6',
+            tertiaryBorderColor: '#d8d0bf',
+            tertiaryTextColor: '#201d16',
+            lineColor: '#201d16',
+            textColor: '#201d16',
+            clusterBkg: '#f3efe6',
+            clusterBorder: '#6e675a',
+            edgeLabelBackground: '#fcfaf4',
+            noteBkgColor: '#e6e9f8',
+            noteBorderColor: '#2440d4',
+            noteTextColor: '#201d16',
+            // state diagrams
+            labelBackgroundColor: '#fcfaf4',
+            stateBkg: '#fcfaf4',
+            stateBorder: '#201d16',
+            transitionColor: '#201d16',
+            transitionLabelColor: '#201d16',
+            specialStateColor: '#2440d4',
+            innerEndBackground: '#2440d4',
+            compositeBackground: '#f3efe6',
+            compositeTitleBackground: '#f3efe6',
+          },
+        },
       },
     }),
 };

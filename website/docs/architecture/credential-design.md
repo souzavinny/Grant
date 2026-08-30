@@ -20,16 +20,20 @@ value. No new token exists in this system, by design.
 
 ## Lifecycle
 
-```text
- DRAFT ── user edits cap on the permission sheet
-   │  Allow (wallet signs)
-   ▼
- ACTIVE ── proveAuthorized × N     each: receipt + spend↑, all limits proven in-circuit
-   │            │
-   │            └─ out-of-scope / over-cap / expired attempt → NO PROOF EXISTS → nothing happens
-   │  revokeMandate (issuer-only proof)
-   ▼
- REVOKED ── permanent; receipts remain; agent locked out everywhere
+```mermaid
+flowchart TB
+  DRAFT["<b>DRAFT</b><br/>user edits the cap on<br/>the permission sheet"]
+  ACTIVE["<b>ACTIVE</b><br/>proveAuthorized × N<br/>each: receipt + spend ↑<br/>all limits proven in-circuit"]
+  REVOKED["<b>REVOKED</b><br/>permanent · receipts remain<br/>agent locked out everywhere"]
+  BLOCKED["out-of-scope / over-cap /<br/>expired attempt:<br/><b>no proof can exist</b><br/>→ nothing happens"]
+
+  DRAFT -->|"Allow — wallet signs<br/>issueMandate"| ACTIVE
+  ACTIVE -->|"revokeMandate<br/>issuer-only proof"| REVOKED
+  ACTIVE -.-> BLOCKED
+
+  style DRAFT fill:#f3efe6,stroke:#6e675a
+  style BLOCKED fill:#faeae5,stroke:#c6402c,color:#7a2417
+  style REVOKED stroke:#c6402c
 ```
 
 ## Receipts: the anti-review

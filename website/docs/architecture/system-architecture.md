@@ -23,18 +23,31 @@ simultaneously the reference implementation, the adoption wedge, and the proof t
 
 ## System diagram
 
-```
- PRINCIPAL (human)                    MIDNIGHT LEDGER                       AGENT (service)
- ────────────────                     ───────────────                       ───────────────
- Grant dApp (browser)                 AgentPass contract                    task logic + its own key
-   │ permission sheet                   mandateCommitments: Map               │
-   │ wallet signs (Lace/Gero/1AM)       spentAmounts: Map                     │
-   ├── issueMandate ────────────────▶   revokedMandates: Set                  │
-   │      terms stay on device          receipts: Map          ◀───────────── ├── proveAuthorized(action, amt)
-   │                                    authorizations: Counter               │     ZK proof via proof server
-   ├── revokeMandate ───────────────▶                                         │
-   │                                  VERIFIER: reads receipts[requestId]     │
-   └── off-chain hand-off of terms+salt ────────────────────────────────────▶ ┘
+Solid arrows are on-chain transactions (each one a ZK proof); dashed arrows never touch the chain's write path —
+the one off-chain hand-off at hire time, and the verifier's plain ledger read.
+
+```mermaid
+flowchart TB
+  subgraph principal["PRINCIPAL · human"]
+    dapp["<b>Grant dApp</b> (browser)<br/>permission sheet · wallet signs<br/>Lace / Gero / 1AM<br/>terms stay on device"]
+  end
+
+  subgraph agent["AGENT · service"]
+    svc["<b>task logic</b> + its own key<br/>ZK proofs via a local<br/>proof server"]
+  end
+
+  subgraph ledger["MIDNIGHT LEDGER"]
+    contract["<b>AgentPass contract</b><br/>mandateCommitments · spentAmounts<br/>revokedMandates · receipts<br/>authorizations"]
+  end
+
+  verifier["<b>Verifier / merchant</b><br/>looks up the receipt for a requestId"]
+
+  dapp -.->|"terms + salt<br/>off-chain hand-off"| svc
+  dapp -->|"issueMandate ·<br/>revokeMandate"| contract
+  svc -->|"proveAuthorized<br/>(action, amount)"| contract
+  contract -.->|"receipt lookup"| verifier
+
+  style verifier fill:#e6e9f8,stroke:#2440d4
 ```
 
 ## Monorepo layout
