@@ -26,6 +26,11 @@ from the public indexer) recorded in [`deployments/preprod.json`](deployments/pr
 `npm run deploy:preprod` in `agentpass-cli/` reproduces the deployment
 (faucet-funded wallet, owner-signed dust registration, deploy, smoke test).
 
+**Documentation.** The full docs (architecture, zero-knowledge design, UX,
+business model, roadmap) are published at
+[glzyt5wkmia.map.azionedge.net](https://glzyt5wkmia.map.azionedge.net); the
+source lives in [`website/`](website/).
+
 ## Use Grant with your own wallet
 
 Grant is a real Midnight dApp: it connects to **any wallet implementing the

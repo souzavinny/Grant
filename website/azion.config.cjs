@@ -17,36 +17,36 @@
  * https://github.com/aziontech/lib/tree/main/packages/config
  */
 
-export default {
+module.exports = {
   build: {
-    preset: 'html',
+    preset: 'docusaurus',
     polyfills: true
   },
   storage: [
     {
-      name: 'grant-20260830163012',
-      prefix: '20260830181240',
-      dir: './dist',
+      name: 'grant-docs',
+      prefix: '20260830190154',
+      dir: './build',
       workloadsAccess: 'read_only'
     }
   ],
   connectors: [
     {
-      name: 'grant',
+      name: 'grant-docs',
       active: true,
       type: 'storage',
       attributes: {
-        bucket: 'grant-20260830163012',
-        prefix: '20260830181240'
+        bucket: 'grant-docs',
+        prefix: '20260830190154'
       }
     }
   ],
   applications: [
     {
-      name: 'grant',
+      name: 'grant-docs',
       cache: [
         {
-          name: 'grant',
+          name: 'grant-docs',
           browser: {
             maxAgeSeconds: 7200
           },
@@ -69,7 +69,7 @@ export default {
                   conditional: 'if',
                   operator: 'matches',
                   argument:
-                    '\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|ttf|otf|woff|woff2|eot|pdf|doc|docx|xls|xlsx|ppt|pptx|mp4|webm|mp3|wav|ogg|css|js|json|xml|html|txt|csv|zip|rar|7z|tar|gz|webmanifest|map|md|yaml|yml|wasm|prover|verifier|bzkir)$'
+                    '\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|ttf|otf|woff|woff2|eot|pdf|doc|docx|xls|xlsx|ppt|pptx|mp4|webm|mp3|wav|ogg|css|js|json|xml|html|txt|csv|zip|rar|7z|tar|gz|webmanifest|map|md|yaml|yml)$'
                 }
               ]
             ],
@@ -77,13 +77,13 @@ export default {
               {
                 type: 'set_connector',
                 attributes: {
-                  value: 'grant'
+                  value: 'grant-docs'
                 }
               },
               {
                 type: 'set_cache_policy',
                 attributes: {
-                  value: 'grant'
+                  value: 'grant-docs'
                 }
               },
               {
@@ -109,7 +109,7 @@ export default {
               {
                 type: 'set_connector',
                 attributes: {
-                  value: 'grant'
+                  value: 'grant-docs'
                 }
               },
               {
@@ -138,13 +138,13 @@ export default {
               {
                 type: 'set_connector',
                 attributes: {
-                  value: 'grant'
+                  value: 'grant-docs'
                 }
               },
               {
                 type: 'rewrite_request',
                 attributes: {
-                  value: '${uri}/index.html'
+                  value: '${uri}.html'
                 }
               }
             ]
@@ -156,18 +156,18 @@ export default {
   ],
   workloads: [
     {
-      name: 'grant',
+      name: 'grant-docs',
       active: true,
       infrastructure: 1,
       deployments: [
         {
-          name: 'grant',
+          name: 'grant-docs',
           current: true,
           active: true,
           strategy: {
             type: 'default',
             attributes: {
-              application: 'grant'
+              application: 'grant-docs'
             }
           }
         }

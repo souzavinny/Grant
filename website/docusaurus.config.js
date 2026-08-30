@@ -8,10 +8,9 @@ const config = {
   tagline: 'Hire AI agents with permissions, not passwords',
   favicon: 'img/favicon.ico',
 
-  // Adjust url/baseUrl when publishing to GitHub Pages
-  // (e.g. https://<user>.github.io/<repo>/).
-  url: 'https://souzavinny.github.io',
-  baseUrl: '/agentpass/',
+  // Served from its own domain on Azion Edge; url is set to the workload domain.
+  url: 'https://glzyt5wkmia.map.azionedge.net',
+  baseUrl: '/',
   organizationName: 'souzavinny',
   projectName: 'agentpass',
   trailingSlash: false,

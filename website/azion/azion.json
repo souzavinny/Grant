@@ -1,15 +1,15 @@
 {
-  "name": "grant",
-  "bucket": "grant-20260830163012",
-  "preset": "html",
+  "name": "grant-docs",
+  "bucket": "grant-docs",
+  "preset": "docusaurus",
   "env": "production",
-  "prefix": "20260830181240",
+  "prefix": "20260830190154",
   "rotate-prefix": true,
   "not-first-run": true,
   "function": [],
   "application": {
-    "id": 1788113006,
-    "name": "grant"
+    "id": 1788123073,
+    "name": "grant-docs"
   },
   "domain": {
     "id": 0,
@@ -25,17 +25,17 @@
     "created": false,
     "rules": [
       {
-        "id": 690525,
+        "id": 690595,
         "name": "Deliver Static Assets and Set Cache Policy",
         "phase": "request"
       },
       {
-        "id": 690526,
+        "id": 690596,
         "name": "Redirect to index.html",
         "phase": "request"
       },
       {
-        "id": 690527,
+        "id": 690597,
         "name": "Redirect to index.html for Subpaths",
         "phase": "request"
       }
@@ -43,26 +43,26 @@
   },
   "cache-settings": [
     {
-      "id": 334538,
-      "name": "grant"
+      "id": 334544,
+      "name": "grant-docs"
     }
   ],
   "workloads": {
-    "id": 1788117152,
-    "name": "grant",
+    "id": 1788127218,
+    "name": "grant-docs",
     "domains": [],
-    "url": "https://r82zpe1auu4.map.azionedge.net",
+    "url": "https://glzyt5wkmia.map.azionedge.net",
     "deployment_id": [
       {
-        "id": 303948,
-        "name": "grant"
+        "id": 304013,
+        "name": "grant-docs"
       }
     ]
   },
   "connectors": [
     {
-      "id": 114460,
-      "name": "grant"
+      "id": 114526,
+      "name": "grant-docs"
     }
   ]
 }
