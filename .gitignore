@@ -62,3 +62,5 @@ managed/
 
 .claude
 .midnight-expert
+# preprod deployer wallet seed — never commit
+agentpass-cli/.deploy-seed-preprod

@@ -18,6 +18,14 @@ The permission prompt is the most rehearsed trust gesture in computing. Grant
 keeps the gesture and upgrades the guarantee: app permissions are promises;
 these are cryptographically enforced, and the grantor stays anonymous.
 
+**Live on Midnight preprod.** AgentPass is deployed on the public preprod
+network at contract
+`36bce435af3a7a0d0e6e00afc748bb9bd1924295849c31eec600737924b2abd8`, with an
+on-chain smoke test (mandate issued, authorization proven, receipt read back
+from the public indexer) recorded in [`deployments/preprod.json`](deployments/preprod.json).
+`npm run deploy:preprod` in `agentpass-cli/` reproduces the deployment
+(faucet-funded wallet, owner-signed dust registration, deploy, smoke test).
+
 ## Use Grant with your own wallet
 
 Grant is a real Midnight dApp: it connects to **any wallet implementing the

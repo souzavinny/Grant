@@ -36,6 +36,7 @@ inventing conventions.
 | 2 · Official witness pipeline | Contract ↔ TypeScript witness interface: generated-type check, structural checklist, dual execution routes, witness trust-boundary review | **Confirmed** by midnight-verify |
 | 3 · PLONK checker (network-grade) | Each compiled circuit's proof validity via the same WASM checker the network uses | All 3 circuits **accepted**; tampered-transcript negative control **rejected** |
 | 4 · Live devnet end-to-end | Real proof server, real transactions, indexer read-back: hire → task → receipt → out-of-scope rejection → revoke → lockout; multi-agent variant incl. cross-agent theft attempt | All checks passed (two suites, repeated runs) + full flow exercised with a real 1AM wallet |
+| 5 · Public-network deployment | The same artifacts on Midnight **preprod**: faucet-funded wallet, owner-signed dust registration, contract deployment, mandate issuance, one proven authorization, receipt read back from the public indexer | Live at contract `36bce435af3a7a0d0e6e00afc748bb9bd1924295849c31eec600737924b2abd8` (`deployments/preprod.json`); preceded by an adversarial security review of the contract and witness layer |
 
 :::info Why four routes?
 Each catches what the others can't: tests check logic, the witness pipeline checks the FFI boundary, the PLONK

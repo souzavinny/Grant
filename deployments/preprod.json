@@ -1,0 +1,9 @@
+{
+  "network": "preprod",
+  "contractAddress": "36bce435af3a7a0d0e6e00afc748bb9bd1924295849c31eec600737924b2abd8",
+  "deployedAt": "2026-08-30T16:19:51.315Z",
+  "smokeTest": {
+    "mandateId": "d1c57f38853a1f6ba6f9c6f6c89c6a2bcc1f450e665ee903c8644090b314693b",
+    "authorizationTx": "dfa5924f98c0406c443c47cbfac6c3ae33f5907b8f8dec676eef19cba1da19a4"
+  }
+}
