@@ -11,10 +11,11 @@
 
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { WebSocket } from 'ws';
 import { createLogger } from '../logger-utils.js';
-import { StandaloneConfig } from '../config.js';
+import { PreprodRemoteConfig, StandaloneConfig } from '../config.js';
 import { MidnightWalletProvider } from '../midnight-wallet-provider.js';
 import { waitForUnshieldedFunds } from '../wallet-utils.js';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
@@ -28,6 +29,7 @@ import {
   type AgentPassProviders,
   type AgentPassPrivateStateId,
   agentPrivateStateKey,
+  principalPrivateStateKey,
   makeTerms,
   derivePublicKey,
 } from '../../../api/src/index';
@@ -345,25 +347,35 @@ const stateSnapshot = async () => ({
 // ---------------------------------------------------------------------------
 
 const boot = async (): Promise<void> => {
-  const config = new StandaloneConfig();
+  const preprod = process.env.GRANT_NET === 'preprod';
+  const config = preprod ? new PreprodRemoteConfig() : new StandaloneConfig();
   const logger = await createLogger(config.logDir);
   const testEnv = config.getEnvironment(logger);
-  say('grant', 'Starting local devnet (node + indexer + proof server)…');
+  say(
+    'grant',
+    preprod
+      ? 'Connecting to Midnight preprod (local proof server + public network)…'
+      : 'Starting local devnet (node + indexer + proof server)…',
+  );
   const envConfiguration = await testEnv.start();
-  state.bootMessage = 'Syncing wallet…';
-  const walletProvider = await MidnightWalletProvider.build(logger, envConfiguration, GENESIS_MINT_WALLET_SEED);
+  state.bootMessage = preprod ? 'Syncing the preprod wallet (a fresh sync can take up to an hour)…' : 'Syncing wallet…';
+  const walletSeed = preprod
+    ? readFileSync(path.resolve(currentDir, '..', '..', '.deploy-seed-preprod'), 'utf8').trim()
+    : GENESIS_MINT_WALLET_SEED;
+  const walletProvider = await MidnightWalletProvider.build(logger, envConfiguration, walletSeed);
   await walletProvider.start();
   await waitForUnshieldedFunds(logger, walletProvider.wallet, envConfiguration, unshieldedToken());
-  state.bootMessage = 'Publishing the AgentPass contract…';
+  state.bootMessage = preprod ? 'Joining the AgentPass contract on preprod…' : 'Publishing the AgentPass contract…';
   const zkConfigProvider = new NodeZkConfigProvider<'issueMandate' | 'proveAuthorized' | 'revokeMandate'>(
     config.zkConfigPath,
   );
+  const storeName = `grant-${preprod ? 'preprod-' : ''}${config.privateStateStoreName}`;
   providers = {
     privateStateProvider: levelPrivateStateProvider<AgentPassPrivateStateId, AgentPassPrivateState>({
-      privateStateStoreName: `grant-${config.privateStateStoreName}`,
-      signingKeyStoreName: `grant-${config.privateStateStoreName}-signing-keys`,
+      privateStateStoreName: storeName,
+      signingKeyStoreName: `${storeName}-signing-keys`,
       privateStoragePasswordProvider: () => 'AgentPass-Test-2026!',
-      accountId: GENESIS_MINT_WALLET_SEED,
+      accountId: walletSeed,
     }),
     publicDataProvider: indexerPublicDataProvider(envConfiguration.indexer, envConfiguration.indexerWS),
     zkConfigProvider,
@@ -371,11 +383,29 @@ const boot = async (): Promise<void> => {
     walletProvider,
     midnightProvider: walletProvider,
   };
-  principal = await AgentPassAPI.deploy(providers, { principalSecretKey }, logger);
+  if (preprod) {
+    const deployment = JSON.parse(
+      readFileSync(path.resolve(currentDir, '..', '..', '..', 'deployments', 'preprod.json'), 'utf8'),
+    ) as { contractAddress: string };
+    principal = await AgentPassAPI.join(
+      providers,
+      deployment.contractAddress,
+      principalPrivateStateKey,
+      { principalSecretKey },
+      logger,
+    );
+  } else {
+    principal = await AgentPassAPI.deploy(providers, { principalSecretKey }, logger);
+  }
   agentApi = await AgentPassAPI.join(providers, principal.deployedContractAddress, agentPrivateStateKey, {}, logger);
   state.contractAddress = principal.deployedContractAddress;
   state.status = 'ready';
-  say('grant', 'Ready. Hire an agent — its permissions become a private, revocable credential.');
+  say(
+    'grant',
+    preprod
+      ? 'Ready on Midnight preprod. Hire an agent — every credential and receipt lands on the public network.'
+      : 'Ready. Hire an agent — its permissions become a private, revocable credential.',
+  );
 };
 
 const json = (res: http.ServerResponse, code: number, body: unknown): void => {

@@ -21,7 +21,8 @@
     "faucet": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/grant-faucet.ts",
     "devnet:up": "docker compose -f ../devnet/devnet.yml up -d",
     "devnet:down": "docker compose -f ../devnet/devnet.yml down",
-    "deploy:preprod": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/preprod-deploy.ts"
+    "deploy:preprod": "node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/preprod-deploy.ts",
+    "app:preprod": "GRANT_NET=preprod node --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/grant-server.ts"
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",

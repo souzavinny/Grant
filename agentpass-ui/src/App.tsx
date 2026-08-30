@@ -102,6 +102,10 @@ const App: React.FC<{ logger: Logger }> = ({ logger }) => {
 
       const current = loadSession();
       const principalState = { principalSecretKey: fromHexStr(current.principalSkHex) };
+      const sharedRegistry = import.meta.env.VITE_REGISTRY_ADDRESS as string | undefined;
+      if (!current.contractAddress && sharedRegistry) {
+        current.contractAddress = sharedRegistry;
+      }
       if (current.contractAddress) {
         setConnStatus('Joining your Grant registry…');
         principalRef.current = await AgentPassAPI.join(
