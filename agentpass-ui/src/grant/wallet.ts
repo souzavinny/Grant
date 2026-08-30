@@ -6,6 +6,11 @@
 // and supplies the network endpoints; ZK keys are fetched from this page's
 // own origin; private state lives in-memory in this tab.
 //
+// Proving is delegated to the wallet's embedded prover when the connector
+// exposes getProvingProvider (1AM bundles one, so no proof server is needed);
+// wallets that only advertise the deprecated proverServerUri fall back to the
+// HTTP proof-server client.
+//
 // Ported from the official example-bboard browser manager (Apache-2.0).
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -27,7 +32,8 @@ import {
   Transaction,
   TransactionId,
 } from '@midnight-ntwrk/midnight-js-protocol/ledger';
-import type { UnboundTransaction } from '@midnight-ntwrk/midnight-js-types';
+import { createProofProvider } from '@midnight-ntwrk/midnight-js-types';
+import type { KeyMaterialProvider, ProofProvider, UnboundTransaction } from '@midnight-ntwrk/midnight-js-types';
 import type { AgentPassPrivateState } from 'agentpass-contract';
 import type { AgentPassCircuitKeys, AgentPassPrivateStateId, AgentPassProviders } from '../../../api/src/index';
 import { inMemoryPrivateStateProvider } from '../in-memory-private-state-provider';
@@ -81,6 +87,39 @@ export const connectToWallet = (logger: Logger, networkId: string): Promise<Conn
   );
 };
 
+/**
+ * Picks the proving path: the wallet's embedded prover when the connector
+ * offers one, otherwise the deprecated proof-server URI it advertises.
+ */
+const selectProofProvider = async (
+  logger: Logger,
+  connectedAPI: ConnectedAPI,
+  zkConfigProvider: FetchZkConfigProvider<AgentPassCircuitKeys>,
+  proverServerUri: string | undefined,
+): Promise<ProofProvider> => {
+  if (typeof connectedAPI.getProvingProvider === 'function') {
+    try {
+      const keyMaterial: KeyMaterialProvider = {
+        getZKIR: (location: string) => zkConfigProvider.getZKIR(location as AgentPassCircuitKeys),
+        getProverKey: (location: string) => zkConfigProvider.getProverKey(location as AgentPassCircuitKeys),
+        getVerifierKey: (location: string) => zkConfigProvider.getVerifierKey(location as AgentPassCircuitKeys),
+      };
+      const walletProver = await connectedAPI.getProvingProvider(keyMaterial);
+      logger.info('Proving delegated to the wallet (embedded prover) — no proof server needed');
+      return createProofProvider(walletProver);
+    } catch (error) {
+      logger.warn({ error }, 'Wallet proving provider unavailable; falling back to the proof server');
+    }
+  }
+  if (proverServerUri) {
+    logger.info({ proverServerUri }, 'Proving via the proof server advertised by the wallet');
+    return httpClientProofProvider(proverServerUri, zkConfigProvider);
+  }
+  throw new Error(
+    'This wallet offers no proving method. Configure a proof server in the wallet, or use a wallet with embedded proving (such as 1AM).',
+  );
+};
+
 /** Assembles browser-side providers around the connected wallet. */
 export const buildProviders = async (logger: Logger, connectedAPI: ConnectedAPI): Promise<AgentPassProviders> => {
   const zkConfigProvider = new FetchZkConfigProvider<AgentPassCircuitKeys>(window.location.origin, fetch.bind(window));
@@ -89,7 +128,7 @@ export const buildProviders = async (logger: Logger, connectedAPI: ConnectedAPI)
   return {
     privateStateProvider: inMemoryPrivateStateProvider<AgentPassPrivateStateId, AgentPassPrivateState>(),
     zkConfigProvider,
-    proofProvider: httpClientProofProvider(config.proverServerUri!, zkConfigProvider),
+    proofProvider: await selectProofProvider(logger, connectedAPI, zkConfigProvider, config.proverServerUri),
     publicDataProvider: indexerPublicDataProvider(config.indexerUri, config.indexerWsUri),
     walletProvider: {
       getCoinPublicKey(): string {
