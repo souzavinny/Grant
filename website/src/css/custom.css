@@ -1,0 +1,103 @@
+/* Grant documentation — Docusaurus theme skinned with the Grant design system.
+   SPDX-License-Identifier: Apache-2.0 */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Allow blue as the Infima primary */
+  --ifm-color-primary: #2440d4;
+  --ifm-color-primary-dark: #2039bf;
+  --ifm-color-primary-darker: #1b32ac;
+  --ifm-color-primary-darkest: #162a8e;
+  --ifm-color-primary-light: #3a55e0;
+  --ifm-color-primary-lighter: #5069e5;
+  --ifm-color-primary-lightest: #7a8fed;
+
+  /* Grant paper & ink */
+  --ifm-background-color: #f3efe6;
+  --ifm-background-surface-color: #fcfaf4;
+  --ifm-font-color-base: #201d16;
+  --ifm-heading-color: #201d16;
+  --ifm-toc-border-color: #d8d0bf;
+  --ifm-color-emphasis-300: #d8d0bf;
+
+  --ifm-font-family-base: 'Schibsted Grotesk', system-ui, sans-serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', ui-monospace, monospace;
+  --ifm-heading-font-family: 'Instrument Serif', Georgia, serif;
+  --ifm-heading-font-weight: 400;
+  --ifm-h1-font-size: 2.6rem;
+  --ifm-code-font-size: 88%;
+  --ifm-global-radius: 0.2rem;
+
+  --docusaurus-highlighted-code-line-bg: rgba(36, 64, 212, 0.1);
+}
+
+/* headings carry the serif personality; keep tight tracking */
+h1, h2, h3 {
+  letter-spacing: -0.01em;
+}
+h4, h5, h6 {
+  font-family: var(--ifm-font-family-base);
+  font-weight: 700;
+}
+
+/* the mono voice = on-chain truth */
+code {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-surface-color);
+}
+
+/* tables in the Grant document style; inline-block shrink-wraps the outer
+   border to the columns while keeping horizontal scroll on narrow screens */
+table {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--ifm-font-color-base);
+  font-size: 0.88rem;
+}
+table th {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* navbar: paper, hard hairline */
+.navbar {
+  background: var(--ifm-background-surface-color);
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  box-shadow: none;
+}
+.navbar__title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+/* sidebar */
+.menu {
+  font-size: 0.86rem;
+}
+.menu__link--active {
+  border-left: 2px solid var(--ifm-color-primary);
+  border-radius: 0;
+}
+
+.footer--light {
+  background: var(--ifm-background-surface-color);
+  border-top: 1px solid var(--ifm-font-color-base);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.72rem;
+}
+
+/* hard offset shadow on primary buttons, Grant-style */
+.button--primary {
+  box-shadow: 4px 4px 0 #201d16;
+  border: none;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.button--primary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 #201d16;
+}
