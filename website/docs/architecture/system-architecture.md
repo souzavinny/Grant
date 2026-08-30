@@ -73,8 +73,8 @@ which mirrors production, where agents are services, not browser tabs.
 - **Wallet dApp** (canonical): the user's wallet signs everything; secrets in the browser.
 - **Walletless demo**: a server custodies a devnet wallet so anyone can feel the full loop in one command — also an
   honest preview of the agent-as-a-service topology.
-- **Engineer console**: the same protocol with the dual-ledger state made visible side-by-side — built for demos to
-  technical judges.
+- **Engineer console**: the same protocol with the dual-ledger state made visible side-by-side — built for
+  technical walkthroughs.
 
 All three consume the identical `AgentPassAPI`; none has private forks of the logic. That is the practical payoff of
 the infra/app split: surfaces are cheap, the primitive is singular.

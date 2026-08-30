@@ -20,7 +20,7 @@ title: User journey
 
 ## How does it actually book? (the skeptic's journey)
 
-Told with TravelBooker, because it's the question every judge asks:
+Told with TravelBooker, because it's the first question every skeptic asks:
 
 1. **Intent, not access.** "Train to the coast on Friday, under $40." Talk is free and proves nothing.
 2. **The agent works with its own tools.** Its fare APIs do the searching. Your accounts are never involved.

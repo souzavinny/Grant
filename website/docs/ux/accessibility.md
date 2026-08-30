@@ -6,7 +6,7 @@ title: Accessibility
 
 A product whose thesis is "trust for everyone" cannot gate that trust on perfect vision, fine motor control, or
 tolerance for motion. This page states our accessibility principles, what the current build does, and what is
-planned — labeled honestly.
+planned.
 
 ## Principles
 
@@ -30,7 +30,7 @@ Implemented: reduced-motion support, high-contrast token palette, text-paired ve
 all actions, readable focus states inherited from native controls, and layouts that reflow at mobile widths.
 Screen-reader labeling exists where React defaults provide it, but a full audit pass (explicit `aria-label`s on the
 spend rings and stamps, live-region announcements when a receipt lands or a proof completes, a tested tab order
-through the permission sheet) has **not** been performed yet — stated as debt, not claimed as done.
+through the permission sheet) has not yet been performed; it heads the Wave 2 plan below.
 
 ## Planned (Wave 2)
 

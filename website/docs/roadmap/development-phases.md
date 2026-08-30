@@ -5,7 +5,7 @@ title: Development phases
 # Development phases
 
 The project is structured around the buildathon's three waves, each with a thesis it must prove. Wave 1 is built and
-verified; later phases are planned scope, labeled as such.
+verified; later phases are planned scope.
 
 ## Phase 1 — Prove the primitive and the gesture *(Wave 1 — built)*
 
@@ -60,5 +60,5 @@ contract.
 Interop with the platform mandate rails (AP2 / ACP receipts), enterprise delegation tooling, batched/session
 mandates for proof-latency headroom, and mainnet deployment tracking Midnight's own rollout.
 
-Each phase's concrete checkpoints are in [milestones](milestones.md); the wave-by-wave submission mapping is in
+Each phase's concrete checkpoints are in [milestones](milestones.md); the wave-by-wave mapping is in
 [hackathon waves](hackathon-waves.md).

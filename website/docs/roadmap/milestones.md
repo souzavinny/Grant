@@ -4,8 +4,7 @@ title: Milestones
 
 # Milestones
 
-Checkpoints with pass/fail criteria — because "done" should be checkable, not felt. Status is as of the Wave 1
-submission.
+Checkpoints with pass/fail criteria — because "done" should be checkable, not felt. Status as of Wave 1.
 
 ## Reached ✅
 
@@ -19,14 +18,12 @@ submission.
 | The product wears its design | Full design system applied to the dApp itself (not a prototype): landing, directory, agent pages, permission sheet, dashboard, receipts, fire flow — plus the brand sheet (seal, 12-icon set) shipped in-repo |
 | Frictionless first contact | Browse with no wallet · connect-on-demand resumes a pending hire · sessions persist locally across refreshes |
 | One-command experiences | `npm run app` (walletless Grant), `npm run demo` (protocol e2e), `npm run app:e2e` (multi-agent suite), `npm run demo:server` (engineer console), `npm run devnet:up` (fixed-port devnet), `npm run faucet -- --self-test` (wallet funding path) |
-| Submission narrative drafted | 12 slides of pitch-deck content, the privacy-design deep dive, and recorded demo walkthroughs (GIFs) |
+| Presentation groundwork | 12 slides of pitch-deck content, the privacy-design deep dive, and recorded demo walkthroughs |
 | Documentation site | This site: architecture, ZK design, UX, business, roadmap |
 
-## Wave 1 submission checklist 🔜
+## Wave 1 release targets
 
-What genuinely remains is packaging, not building: a narrated demo video (walkthrough GIFs are already recorded) ·
-GitHub repository public with the `midnightntwrk` topic · slide export of the written pitch deck · AKINDO submission
-filed before **September 16, 2026**.
+Public GitHub repository · narrated demo video · presentation deck · buildathon entry (September 16, 2026).
 
 ## Wave 2 targets
 

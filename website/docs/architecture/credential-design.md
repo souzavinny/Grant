@@ -43,7 +43,7 @@ system's reputation substrate: an agent's track record is the set of receipts it
 by anyone, writable only through valid proofs. This inverts the marketplace trust model: instead of reviews anyone
 can fabricate, records no one can.
 
-## Pseudonymity properties (v1, stated honestly)
+## Pseudonymity properties (v1)
 
 | An observer learns | An observer can never learn |
 |---|---|

@@ -30,9 +30,9 @@ work. Grant's answer is **two** — pick an agent, tap Allow.
   nothing to recover.
 - **Vocabulary:** hire, fire, credential, receipt. The only chain word on screen is the Midnight footnote.
 
-## Known onboarding debt (stated, with plan)
+## Current friction and the plan
 
 Self-custody on a local devnet still requires funding (one faucet command) and wallet-side fee-resource generation —
-acceptable for builders and judges, not for consumers. The consumer answer is Wave-3 **passkey onboarding**: same
+workable for builders and evaluators, not for consumers. The consumer answer is Wave-3 **passkey onboarding**: same
 credentials, no wallet concept. We consider onboarding *designed* today and *finished* when a non-technical user's
 step 3 disappears entirely.

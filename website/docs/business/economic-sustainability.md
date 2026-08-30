@@ -38,5 +38,5 @@ rewrites.
 
 Sustainability inherits two things we don't control: Midnight mainnet fee economics staying compatible with
 high-frequency small authorizations, and wallet UX maturing for consumers. Both are network-level bets — the same
-bets every serious Midnight application is making — and both have stated mitigation paths (batching; Wave-3 passkey
+bets every serious Midnight application is making — and both have mitigation paths (batching; Wave-3 passkey
 onboarding).

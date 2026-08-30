@@ -42,7 +42,7 @@ to the same question: *is this agent authorized, and by whom?*
 3. **No verifiable agent reputation.** Marketplaces rank agents by unverifiable reviews; nothing binds an agent's
    claimed record to cryptographic evidence.
 4. **Nothing on privacy chains.** Across our research of the Midnight, Aleo, and Aztec ecosystems, no shipped
-   project does private agent delegation (observed absence as of Aug 2026 — stated as such, not proof).
+   project does private agent delegation (as of August 2026).
 
 ## Competitive landscape
 

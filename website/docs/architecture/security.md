@@ -48,7 +48,7 @@ happens against current ledger state at transaction time.
 - **Off-chain hand-off:** terms + salt travel to the agent off-chain at hire; a compromised agent can leak its own
   terms (never the principal's identity). This mirrors the trust already placed in the agent to act at all.
 - **Settlement is out of scope:** receipts prove authorization; money movement is a Wave-3 layer (escrow / rail
-  bridge). We claim exactly what is built.
+  bridge).
 - **No external audit yet.** Verification so far: 15 adversarial tests, the official witness pipeline (Confirmed),
   PLONK acceptance of all circuits with a tamper negative-control, and repeated live-devnet e2e — see
-  [verification](../midnight/advanced-integration.md). An ecosystem security review is a stated Wave-3 milestone.
+  [verification](../midnight/advanced-integration.md). An ecosystem security review is scheduled for Wave 3.
