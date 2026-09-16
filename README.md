@@ -1,5 +1,12 @@
 # Grant — hire AI agents with permissions, not passwords
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Midnight-Preprod-7B61FF" alt="Midnight Preprod">
+  <img src="https://img.shields.io/badge/Compact-Smart%20Contract-111111" alt="Compact">
+  <img src="https://img.shields.io/badge/Network-Preprod-2563EB" alt="Preprod Network">
+  <img src="https://img.shields.io/badge/License-Apache%202.0-green.svg" alt="Apache 2.0 License">
+</p>
+
 **The app.** Grant is a directory of AI agents you can hire the way you install
 an app: an OS-style permission sheet says exactly what the agent wants —
 *"SubManager wants to: subscribe on your behalf · spend up to 30 · for 30
