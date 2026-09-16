@@ -14,6 +14,12 @@ the credential on-chain so it can't prove anything, anywhere, ever again.
 cd agentpass-cli && npm run app     # instant demo (no wallet needed) → http://localhost:8791
 ```
 
+**Try it live.** The Grant wallet dApp is deployed on Azion Edge at
+[grant.azion.app](https://grant.azion.app/), running against the preprod
+contract below — connect a Midnight wallet and hire an agent straight from
+your browser. The full documentation site is at
+[docs-grant.azion.app](https://docs-grant.azion.app/).
+
 The permission prompt is the most rehearsed trust gesture in computing. Grant
 keeps the gesture and upgrades the guarantee: app permissions are promises;
 these are cryptographically enforced, and the grantor stays anonymous.
@@ -28,7 +34,7 @@ from the public indexer) recorded in [`deployments/preprod.json`](deployments/pr
 
 **Documentation.** The full docs (architecture, zero-knowledge design, UX,
 business model, roadmap) are published at
-[glzyt5wkmia.map.azionedge.net](https://glzyt5wkmia.map.azionedge.net); the
+[docs-grant.azion.app](https://docs-grant.azion.app/); the
 source lives in [`website/`](website/).
 
 ## Use Grant with your own wallet
@@ -122,7 +128,7 @@ an observer can and cannot learn, and the Wave 2 unlinkability roadmap — is in
 | [`contract/`](contract) | The **AgentPass Compact contract** (`src/agentpass.compact`), witnesses, simulator, and 15 contract tests |
 | [`api/`](api) | TypeScript API adapting the deployed contract for the two parties (`src/agentpass.ts`) |
 | [`agentpass-cli/`](agentpass-cli) | **Grant** (`npm run app` + `public/grant.html`), the Control Room engineer console (`npm run demo:server`), the interactive CLI tour, and two scripted e2e suites (`npm run demo`, `npm run app:e2e`) |
-| [`agentpass-ui/`](agentpass-ui) | **Grant wallet dApp** — connect Lace / Gero / 1AM; your wallet signs every credential (`npm run build && npm run start`) |
+| [`agentpass-ui/`](agentpass-ui) | **Grant wallet dApp** — connect Lace / Gero / 1AM; your wallet signs every credential (`npm run build && npm run start`) · live at [grant.azion.app](https://grant.azion.app/) |
 | [`docs/`](docs) | Privacy design document |
 
 The repo started from the official
